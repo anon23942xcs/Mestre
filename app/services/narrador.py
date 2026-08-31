@@ -13,12 +13,11 @@ Parecido com o gerar_resposta() original, mas com duas diferenças:
 from typing import Optional
 
 from app.models.estado import EstadoCompleto
-from app.models.teste import ResultadoTeste
+from app.systems.base import ResultadoTesteGenerico
 from app.prompts.preencher import preencher
 from app.services.formatadores import (
     formatar_memorias,
     formatar_npcs_narrativa,
-    formatar_teste_narrador,
 )
 from app.services.ia_client import gerar_texto
 from app.services.fichas_jogador import formatar_ficha_estruturada
@@ -27,7 +26,7 @@ PROMPT = """[INSTRUÇÕES DO MESTRE]
 - Você é o Mestre de RPG. Narra a história, controla os NPCs e o mundo.
 - NUNCA controle o personagem do jogador nem decida as ações dele.
 - NPCs têm personalidades próprias e podem discordar ou negar pedidos.
-- Se houver um resultado de teste de dados abaixo, a narrativa DEVE refletir esse resultado exatamente (sucesso ou falha), você não decide isso, o sistema já decidiu.
+{instrucao_teste}
 - Introduza conflitos quando a história estiver muito parada.
 - Limite a resposta a no máximo 4 parágrafos.
 - Seja descritivo, mostre emoções através de ações e diálogos, não apenas afirme.
@@ -49,7 +48,7 @@ Nome: {nome}
 Aparência: {aparencia}
 Histórico: {historico}
 Inventário: {inventario}
-PV: {pv}/{pv_max}
+{bloco_pv}
 
 [FICHA COMPLETA DO PERSONAGEM]
 {ficha_completa}
@@ -72,8 +71,7 @@ PV: {pv}/{pv_max}
 [CENA ANTERIOR]
 {cena_anterior}
 
-[RESULTADO DE TESTE DE DADOS]
-{resultado_teste}
+{bloco_teste}
 
 [MENSAGEM DO JOGADOR]
 "{mensagem}"
@@ -83,7 +81,8 @@ Escreva a narração em prosa, mantendo a imersão e a coerência. Não controle
 """
 
 
-def narrar(estado: EstadoCompleto, mensagem: str, resultado_teste: Optional[ResultadoTeste] = None) -> str:
+def narrar(estado: EstadoCompleto, mensagem: str, resultado_teste: Optional[ResultadoTesteGenerico] = None) -> str:
+    sistema_rpg = estado.configuracao_mundo.sistema_rpg
     prompt = preencher(
         PROMPT,
         mundo=estado.mundo,
@@ -95,8 +94,12 @@ def narrar(estado: EstadoCompleto, mensagem: str, resultado_teste: Optional[Resu
         personalidade_mestre=estado.configuracao_mundo.personalidade,
         dialogos_exemplo=estado.configuracao_mundo.dialogos_exemplo,
         inventario=", ".join(estado.jogador.inventario) or "nenhum",
-        pv=estado.jogador.pv,
-        pv_max=estado.jogador.pv_max,
+        instrucao_teste=(
+            "- Se houver um resultado de teste de dados abaixo, a narrativa DEVE refletir esse resultado exatamente (sucesso ou falha), você não decide isso, o sistema já decidiu."
+            if sistema_rpg else
+            "- Esta é uma narrativa pura: nunca mencione PV, HP, dados, rolagens, CDs ou testes."
+        ),
+        bloco_pv=f"PV: {estado.jogador.pv}/{estado.jogador.pv_max}" if sistema_rpg else "",
         local=estado.estado.local,
         hora=estado.estado.hora,
         clima=estado.estado.clima,
@@ -105,7 +108,10 @@ def narrar(estado: EstadoCompleto, mensagem: str, resultado_teste: Optional[Resu
         memorias_importantes=formatar_memorias(estado.estado.memorias_importantes, "nenhuma ainda"),
         memorias_recentes=formatar_memorias(estado.estado.memorias_recentes, "nenhum turno recente"),
         cena_anterior=estado.ultima_narracao or "início da campanha",
-        resultado_teste=formatar_teste_narrador(resultado_teste),
+        bloco_teste=(
+            f"[RESULTADO DO SISTEMA DE REGRAS]\n{resultado_teste.resumo_narrador}"
+            if sistema_rpg and resultado_teste and resultado_teste.houve_teste else ""
+        ),
         mensagem=mensagem,
     )
     texto = gerar_texto(prompt)

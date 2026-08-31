@@ -74,6 +74,7 @@
                 <textarea id="primeira_mensagem" placeholder="A abertura da campanha"></textarea>
                 <label for="dialogos_exemplo">Diálogos de exemplo</label>
                 <textarea id="dialogos_exemplo" placeholder="Exemplos de tom, fala e formatação"></textarea>
+                <label><input type="checkbox" id="sistema_rpg" checked style="width:auto;"> Usar sistema de RPG (dados, testes e PV)</label>
             </details>
             <button onclick="criarPersonagem()" style="width:100%;">Iniciar Aventura</button>
         </div>
@@ -294,6 +295,7 @@
             document.getElementById('historico').value = '';
             document.getElementById('ficha_completa').value = '';
             ['cenario', 'personalidade_mestre', 'primeira_mensagem', 'dialogos_exemplo'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('sistema_rpg').checked = true;
         }
 
         function escapeHtml(str) {
@@ -362,7 +364,8 @@
                 cenario: document.getElementById('cenario').value || '',
                 personalidade_mestre: document.getElementById('personalidade_mestre').value || '',
                 primeira_mensagem: document.getElementById('primeira_mensagem').value || '',
-                dialogos_exemplo: document.getElementById('dialogos_exemplo').value || ''
+                dialogos_exemplo: document.getElementById('dialogos_exemplo').value || '',
+                sistema_rpg: document.getElementById('sistema_rpg').checked
             };
 
             const resp = await fetch('/campanhas', {
@@ -413,8 +416,9 @@
 
                 if (dados.teste) {
                     const t = dados.teste;
-                    const status = t.critico_sucesso ? 'sucesso crítico' : (t.critico_falha ? 'falha crítica' : (t.sucesso ? 'sucesso' : 'falha'));
-                    chat.innerHTML += `<div class="msg-teste">Teste de dados: ${t.rolagem} + ${t.atributo} = ${t.total} vs CD ${t.dificuldade} (${status})</div>`;
+                    if (t.houve_teste) {
+                        chat.innerHTML += `<div class="msg-teste">${escapeHtml(t.resumo_narrador)}</div>`;
+                    }
                 }
 
                 chat.innerHTML += `<div class="msg-ia">${formatarNarracao(dados.resposta)}</div>`;

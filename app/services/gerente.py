@@ -18,7 +18,7 @@ from typing import Optional
 
 from app.config import LIMITE_MEMORIAS_IMPORTANTES, LIMITE_MEMORIAS_RECENTES
 from app.models.estado import EstadoCompleto, NPC
-from app.models.teste import ResultadoTeste
+from app.systems.base import ResultadoTesteGenerico
 from app.prompts.preencher import preencher
 from app.services.formatadores import formatar_npcs_resumo, formatar_teste_gerente
 from app.services.ia_client import gerar_json, ErroIA, ErroFormatoIA
@@ -73,7 +73,7 @@ def atualizar_estado(
     estado: EstadoCompleto,
     mensagem: str,
     interpretacao: dict,
-    resultado_teste: Optional[ResultadoTeste] = None,
+    resultado_teste: Optional[ResultadoTesteGenerico] = None,
 ) -> EstadoCompleto:
     prompt = preencher(
         PROMPT,

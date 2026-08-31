@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 from app.models.estado import EstadoCompleto
 from app.models.ficha import TipoFicha
-from app.models.teste import ResultadoTeste
+from app.systems.base import ResultadoTesteGenerico
 
 
 class CriarPersonagemRequest(BaseModel):
@@ -32,6 +32,7 @@ class CriarPersonagemRequest(BaseModel):
     personalidade_mestre: str = Field(default="", max_length=8000)
     primeira_mensagem: str = Field(default="", max_length=4000)
     dialogos_exemplo: str = Field(default="", max_length=12000)
+    sistema_rpg: bool = True
 
 
 class AcaoRequest(BaseModel):
@@ -45,8 +46,8 @@ class RespostaAcao(BaseModel):
     # aqui, separados do texto narrativo que o jogador lê. Antes, um erro
     # de API virava texto de narração misturado com a ficção.
     erro: Optional[str] = None
-    # Resultado do teste de dados, quando a ação exigiu um (ver services/dados.py).
-    teste: Optional[ResultadoTeste] = None
+    # Contrato agnóstico ao sistema de regras ativo.
+    teste: Optional[ResultadoTesteGenerico] = None
 
 
 class FichaMundoRequest(BaseModel):

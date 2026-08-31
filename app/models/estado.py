@@ -32,6 +32,9 @@ class Jogador(BaseModel):
     # Texto fonte preservado acima; esta cópia por seções é a que o Narrador
     # consome, para que regras extensas não virem uma única string opaca.
     ficha_estruturada: Dict[str, str] = Field(default_factory=dict)
+    # Espaço de ficha próprio de cada plugin; o d20 ainda usa Atributos
+    # durante a transição, mas sistemas novos não precisarão mudar o núcleo.
+    ficha_sistema: Dict[str, object] = Field(default_factory=dict)
     atributos: Atributos = Field(default_factory=Atributos)
     inventario: List[str] = Field(default_factory=lambda: ["roupas rasgadas"])
     pv: int = 20
@@ -77,6 +80,9 @@ class Campanha(BaseModel):
 
 
 class ConfiguracaoMundo(BaseModel):
+    # Mantém compatibilidade com campanhas existentes: RPG é o padrão.
+    sistema_rpg: bool = True
+    sistema_id: str = "d20"
     cenario: str = "Uma aventura de fantasia medieval no reino de Valdris."
     personalidade: str = "Um Mestre imparcial, descritivo e atento às escolhas do jogador."
     primeira_mensagem: str = "Bem-vindo a Alderan, viajante. O que você deseja fazer?"

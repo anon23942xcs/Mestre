@@ -49,6 +49,8 @@ async def criar_campanha(dados: CriarPersonagemRequest):
             ficha_estruturada=organizar_ficha_markdown(dados.ficha_completa),
         ),
         ConfiguracaoMundo(
+            sistema_rpg=dados.sistema_rpg,
+            sistema_id="d20" if dados.sistema_rpg else "nenhum",
             cenario=dados.cenario.strip() or ConfiguracaoMundo().cenario,
             personalidade=dados.personalidade_mestre.strip() or ConfiguracaoMundo().personalidade,
             primeira_mensagem=dados.primeira_mensagem.strip() or ConfiguracaoMundo().primeira_mensagem,

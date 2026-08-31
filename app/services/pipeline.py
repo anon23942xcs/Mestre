@@ -27,9 +27,10 @@ from typing import Optional
 
 from app.config import TURNOS_POR_COMPILACAO
 from app.models.estado import EstadoCompleto
-from app.models.teste import ResultadoTeste
-from app.services import compilador, dados, gerente, interprete, narrador
+from app.services import compilador, gerente, interprete, narrador
 from app.services.ia_client import ErroIA
+from app.systems.base import ResultadoTesteGenerico
+from app.systems.registro import obter_sistema
 
 
 @dataclass
@@ -37,7 +38,7 @@ class ResultadoTurno:
     resposta: str
     estado: EstadoCompleto
     erro: Optional[str]
-    teste: Optional[ResultadoTeste]
+    teste: Optional[ResultadoTesteGenerico]
 
 
 def processar_turno(estado: EstadoCompleto, mensagem: str) -> ResultadoTurno:
@@ -46,13 +47,11 @@ def processar_turno(estado: EstadoCompleto, mensagem: str) -> ResultadoTurno:
     # Passo 1: Intérprete
     interpretacao = interprete.interpretar(mensagem)
 
-    # Teste de dados, decidido por código, não pela IA
+    # O pipeline só conhece o contrato do plugin, nunca regras/atributos d20.
     resultado_teste = None
-    if interpretacao.get("requer_teste"):
-        atributo_nome = dados.atributo_para_tipo(interpretacao.get("tipo_acao", "outro"))
-        valor_atributo = getattr(estado.jogador.atributos, atributo_nome, 5)
-        dificuldade = interpretacao.get("dificuldade_sugerida") or 12
-        resultado_teste = dados.resolver_teste(valor_atributo, int(dificuldade))
+    if estado.configuracao_mundo.sistema_rpg and interpretacao.get("requer_teste"):
+        sistema = obter_sistema(estado.configuracao_mundo.sistema_id)
+        resultado_teste = sistema.resolver(estado, interpretacao)
 
     # Passo 2: Gerente atualiza o estado (NPCs, eventos, progresso)
     estado = gerente.atualizar_estado(estado, mensagem, interpretacao, resultado_teste)

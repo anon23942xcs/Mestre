@@ -2,6 +2,7 @@ from typing import Optional
 
 from app.models.estado import EstadoCompleto
 from app.models.teste import ResultadoTeste
+from app.systems.base import ResultadoTesteGenerico
 
 
 def formatar_npcs_resumo(estado: EstadoCompleto) -> str:
@@ -23,14 +24,10 @@ def formatar_npcs_narrativa(estado: EstadoCompleto) -> str:
     )
 
 
-def formatar_teste_gerente(resultado: Optional[ResultadoTeste]) -> str:
+def formatar_teste_gerente(resultado: Optional[ResultadoTesteGenerico]) -> str:
     if not resultado:
         return ""
-    status = "sucesso" if resultado.sucesso else "falha"
-    return (
-        f"Resultado do teste de dados: {status} "
-        f"(rolou {resultado.rolagem}, total {resultado.total} contra dificuldade {resultado.dificuldade})"
-    )
+    return resultado.resumo_narrador if resultado.houve_teste else ""
 
 
 def formatar_teste_narrador(resultado: Optional[ResultadoTeste]) -> str:

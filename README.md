@@ -1,11 +1,10 @@
-# Mestre 0.2.2 - motor de RPG com IA
+# Mestre 0.4.0 - motor de RPG com IA
 
 ## Versão atual
 
-**0.2.2** — Wiki canônica com relações por ID e atualização via patch do
-Gerente; fichas extensas de jogador organizadas localmente por Markdown; e
-configuração de mundo com cenário, personalidade, primeira mensagem e diálogos
-de exemplo.
+**0.4.0** — Sistema de regras plugável: o d20 atual foi portado como plugin e
+o modo narrativa pura é o plugin `nenhum`. Novos sistemas poderão ser
+adicionados sem acoplar regras ao pipeline.
 
 O projeto usa versionamento semântico: `MAIOR.MENOR.CORREÇÃO`. Recursos novos
 compatíveis elevam a versão menor; correções elevam a versão de correção;
@@ -47,6 +46,10 @@ O que já funciona de ponta a ponta:
   seção localmente, sem uma IA resumir ou alterar seu conteúdo
 - cada mundo tem cenário, personalidade do Mestre, primeira mensagem e
   diálogos de exemplo, configuráveis ao criar a campanha
+- modo opcional de narrativa pura: sem dados, PV, testes ou rolagens no
+  processamento e no contexto enviado ao Narrador
+- sistemas de regras plugáveis, com contrato genérico de resultado; hoje há os
+  plugins `d20` (padrão) e `nenhum` (narrativa pura)
 
 ## Fichas e presença
 
@@ -73,6 +76,22 @@ não consome tokens nem altera o que foi escrito.
 Na seção **Configurar mundo**, o criador pode definir os quatro blocos comuns
 a plataformas de RP: cenário, personalidade do Mestre, primeira mensagem e
 diálogos de exemplo. Há valores padrão se os campos forem deixados vazios.
+
+O mesmo painel inclui **Usar sistema de RPG**. Ele vem ativado por padrão e
+preserva o modo tradicional de dados/PV. Ao desativá-lo, a campanha torna-se
+narrativa pura: ações não rolam testes e o Narrador não recebe PV, HP, CDs,
+rolagens ou o bloco de resultado de dados.
+
+## Sistemas de regras
+
+O pipeline não conhece mais d20, atributos ou fórmulas de teste. Ele consulta
+o registro em `app/systems/registro.py` pelo `sistema_id` da campanha, recebe
+um `ResultadoTesteGenerico` e passa apenas o resumo narrativo ao Mestre.
+
+`d20` mantém exatamente a regra anterior (1d20 + atributo versus dificuldade,
+com críticos em 20 e 1) reutilizando `services/dados.py`. `nenhum` retorna um
+resultado vazio e serve à narrativa pura. Um novo sistema só precisa implementar
+o contrato de `app/systems/base.py` e ser registrado, sem reescrever o pipeline.
 
 ## Wiki canônica e patch automático
 
