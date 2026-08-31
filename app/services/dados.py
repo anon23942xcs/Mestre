@@ -32,6 +32,11 @@ def rolar_d20() -> int:
     return random.randint(1, 20)
 
 
+def rolar_pool(quantidade: int) -> list[int]:
+    """Rola um pool d10; isolado para poder ser mockado pelos sistemas/testes."""
+    return [random.randint(1, 10) for _ in range(max(0, quantidade))]
+
+
 def resolver_teste(valor_atributo: int, dificuldade: int = 12) -> ResultadoTeste:
     """
     Rola 1d20 + atributo contra uma dificuldade (CD).

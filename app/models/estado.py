@@ -83,6 +83,7 @@ class ConfiguracaoMundo(BaseModel):
     # Mantém compatibilidade com campanhas existentes: RPG é o padrão.
     sistema_rpg: bool = True
     sistema_id: str = "d20"
+    d10_limiar_sucesso: int = 6
     cenario: str = "Uma aventura de fantasia medieval no reino de Valdris."
     personalidade: str = "Um Mestre imparcial, descritivo e atento às escolhas do jogador."
     primeira_mensagem: str = "Bem-vindo a Alderan, viajante. O que você deseja fazer?"

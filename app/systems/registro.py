@@ -1,10 +1,12 @@
 """Registro central de plugins de regras disponíveis."""
 from app.systems.base import SistemaRPG
 from app.systems.sistema_d20 import SistemaD20
+from app.systems.sistema_d10 import SistemaD10
 from app.systems.sistema_nenhum import SistemaNenhum
 
 SISTEMAS: dict[str, SistemaRPG] = {
     "d20": SistemaD20(),
+    "d10": SistemaD10(),
     "nenhum": SistemaNenhum(),
 }
 

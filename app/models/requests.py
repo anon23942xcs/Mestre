@@ -33,6 +33,8 @@ class CriarPersonagemRequest(BaseModel):
     primeira_mensagem: str = Field(default="", max_length=4000)
     dialogos_exemplo: str = Field(default="", max_length=12000)
     sistema_rpg: bool = True
+    sistema_id: str = Field(default="d20", max_length=40)
+    d10_limiar_sucesso: int = Field(default=6, ge=2, le=10)
 
 
 class AcaoRequest(BaseModel):

@@ -75,6 +75,10 @@
                 <label for="dialogos_exemplo">Diálogos de exemplo</label>
                 <textarea id="dialogos_exemplo" placeholder="Exemplos de tom, fala e formatação"></textarea>
                 <label><input type="checkbox" id="sistema_rpg" checked style="width:auto;"> Usar sistema de RPG (dados, testes e PV)</label>
+                <label for="sistema_id">Sistema de regras</label>
+                <select id="sistema_id"><option value="d20">d20 clássico</option><option value="d10">d10 (pool oposto)</option><option value="nenhum">Narrativa pura</option></select>
+                <label for="d10_limiar_sucesso">d10: limiar de sucesso</label>
+                <select id="d10_limiar_sucesso"><option value="5">5 — fácil</option><option value="6" selected>6 — normal</option><option value="7">7 — difícil</option><option value="8">8 — muito difícil</option></select>
             </details>
             <button onclick="criarPersonagem()" style="width:100%;">Iniciar Aventura</button>
         </div>
@@ -296,6 +300,8 @@
             document.getElementById('ficha_completa').value = '';
             ['cenario', 'personalidade_mestre', 'primeira_mensagem', 'dialogos_exemplo'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('sistema_rpg').checked = true;
+            document.getElementById('sistema_id').value = 'd20';
+            document.getElementById('d10_limiar_sucesso').value = '6';
         }
 
         function escapeHtml(str) {
@@ -365,7 +371,9 @@
                 personalidade_mestre: document.getElementById('personalidade_mestre').value || '',
                 primeira_mensagem: document.getElementById('primeira_mensagem').value || '',
                 dialogos_exemplo: document.getElementById('dialogos_exemplo').value || '',
-                sistema_rpg: document.getElementById('sistema_rpg').checked
+                sistema_rpg: document.getElementById('sistema_rpg').checked,
+                sistema_id: document.getElementById('sistema_id').value,
+                d10_limiar_sucesso: parseInt(document.getElementById('d10_limiar_sucesso').value)
             };
 
             const resp = await fetch('/campanhas', {

@@ -50,7 +50,8 @@ async def criar_campanha(dados: CriarPersonagemRequest):
         ),
         ConfiguracaoMundo(
             sistema_rpg=dados.sistema_rpg,
-            sistema_id="d20" if dados.sistema_rpg else "nenhum",
+            sistema_id=dados.sistema_id.strip() if dados.sistema_rpg else "nenhum",
+            d10_limiar_sucesso=dados.d10_limiar_sucesso,
             cenario=dados.cenario.strip() or ConfiguracaoMundo().cenario,
             personalidade=dados.personalidade_mestre.strip() or ConfiguracaoMundo().personalidade,
             primeira_mensagem=dados.primeira_mensagem.strip() or ConfiguracaoMundo().primeira_mensagem,
