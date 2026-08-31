@@ -6,3 +6,5 @@ __pycache__/
 .mypy_cache/
 data/*.json
 data/*.tmp
+data/wiki/
+work/

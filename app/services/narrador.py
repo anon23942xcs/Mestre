@@ -21,6 +21,7 @@ from app.services.formatadores import (
     formatar_teste_narrador,
 )
 from app.services.ia_client import gerar_texto
+from app.services.fichas_jogador import formatar_ficha_estruturada
 
 PROMPT = """[INSTRUÇÕES DO MESTRE]
 - Você é o Mestre de RPG. Narra a história, controla os NPCs e o mundo.
@@ -39,6 +40,9 @@ PROMPT = """[INSTRUÇÕES DO MESTRE]
 
 [ESTADO DO MUNDO]
 Mundo: {mundo}
+Cenário: {cenario}
+Personalidade do Mestre: {personalidade_mestre}
+Diálogos de referência: {dialogos_exemplo}
 
 [JOGADOR]
 Nome: {nome}
@@ -86,7 +90,10 @@ def narrar(estado: EstadoCompleto, mensagem: str, resultado_teste: Optional[Resu
         nome=estado.jogador.nome,
         aparencia=estado.jogador.aparencia,
         historico=estado.jogador.historico,
-        ficha_completa=estado.jogador.ficha_completa or "nenhuma ficha adicional além do histórico acima",
+        ficha_completa=formatar_ficha_estruturada(estado.jogador.ficha_estruturada, estado.jogador.ficha_completa),
+        cenario=estado.configuracao_mundo.cenario,
+        personalidade_mestre=estado.configuracao_mundo.personalidade,
+        dialogos_exemplo=estado.configuracao_mundo.dialogos_exemplo,
         inventario=", ".join(estado.jogador.inventario) or "nenhum",
         pv=estado.jogador.pv,
         pv_max=estado.jogador.pv_max,

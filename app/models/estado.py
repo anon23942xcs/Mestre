@@ -8,7 +8,7 @@ Mesma ideia do models.py original, mas com dois campos novos importantes:
   a cada N turnos.
 """
 from pydantic import BaseModel, Field
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 from datetime import datetime
 
 
@@ -29,6 +29,9 @@ class Jogador(BaseModel):
     # lore, etc.). Fica separada de "historico" porque pode ser bem mais
     # longa; é injetada inteira no prompt do Narrador a cada turno.
     ficha_completa: str = ""
+    # Texto fonte preservado acima; esta cópia por seções é a que o Narrador
+    # consome, para que regras extensas não virem uma única string opaca.
+    ficha_estruturada: Dict[str, str] = Field(default_factory=dict)
     atributos: Atributos = Field(default_factory=Atributos)
     inventario: List[str] = Field(default_factory=lambda: ["roupas rasgadas"])
     pv: int = 20
@@ -44,6 +47,13 @@ class NPC(BaseModel):
     relacao: int = 0
     segredos: List[str] = Field(default_factory=list)
     ultima_interacao: str = ""
+    # Um NPC ausente continua persistido, mas não é incluído no prompt.
+    presente: bool = True
+    local_ausente: str = ""
+    ficha_catalogo_id: Optional[str] = None
+    memoria_relacao: str = ""
+
+
 
 
 class Estado(BaseModel):
@@ -52,7 +62,9 @@ class Estado(BaseModel):
     hora: str = "manhã"
     clima: str = "normal"
     eventos_ativos: List[str] = Field(default_factory=list)
+    # ``npc_ativos`` contém exclusivamente quem está na cena atual.
     npc_ativos: List[NPC] = Field(default_factory=list)
+    npc_ausentes: List[NPC] = Field(default_factory=list)
     memorias_recentes: List[str] = Field(default_factory=list)
     memorias_importantes: List[str] = Field(default_factory=list)
 
@@ -64,9 +76,17 @@ class Campanha(BaseModel):
     proximos_eventos: List[str] = Field(default_factory=list)
 
 
+class ConfiguracaoMundo(BaseModel):
+    cenario: str = "Uma aventura de fantasia medieval no reino de Valdris."
+    personalidade: str = "Um Mestre imparcial, descritivo e atento às escolhas do jogador."
+    primeira_mensagem: str = "Bem-vindo a Alderan, viajante. O que você deseja fazer?"
+    dialogos_exemplo: str = "*A estalajadeira cruza os braços.* \"O que vai pedir?\""
+
+
 class EstadoCompleto(BaseModel):
     campanha_id: str
     mundo: str = "Fantasia Medieval - Alderan, Reino de Valdris"
+    configuracao_mundo: ConfiguracaoMundo = Field(default_factory=ConfiguracaoMundo)
     jogador: Jogador
     estado: Estado
     campanha: Campanha = Field(default_factory=Campanha)

@@ -21,6 +21,8 @@
         .login-form input, .login-form textarea { width: 100%; margin-bottom: 5px; background: #0f3460; color: white; border: 1px solid #1a1a2e; }
         .login-form textarea { height: 60px; }
         .login-form textarea#ficha_completa { height: 220px; font-family: monospace; font-size: 13px; }
+        .mundo-config { margin-top: 16px; border-top: 1px solid #345; padding-top: 8px; }
+        details summary { color: #f4d35e; cursor: pointer; margin: 8px 0; }
         .login-form label { display: block; font-size: 12px; color: #aaa; margin: 10px 0 3px; }
         .msg-ia em { font-style: italic; color: #b8b8d1; }
         .msg-confirmacao { background: #16213e; padding: 10px; margin: 5px 0; border-radius: 5px; font-size: 12px; color: #8fd694; border-left: 3px solid #8fd694; }
@@ -37,6 +39,15 @@
         .modal-close { color: #e94560; cursor: pointer; font-size: 28px; font-weight: bold; position: absolute; top: 20px; right: 30px; }
         .modal-close:hover { color: #f4d35e; }
         .btn-ver-ficha { background: transparent; border: 1px solid #f4d35e; color: #f4d35e; font-size: 12px; padding: 6px 10px; cursor: pointer; margin-left: 10px; }
+        .btn-catalogo { background: transparent; border: 1px solid #8fd694; color: #8fd694; font-size: 12px; padding: 6px 10px; cursor: pointer; margin-left: 10px; }
+        .catalogo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin: 14px 0; }
+        .ficha-card { background: #0f3460; padding: 12px; border-radius: 6px; }
+        .ficha-card small { color: #f4d35e; display: block; margin-bottom: 5px; }
+        .ficha-card h4 { margin: 3px 0; }
+        .ficha-card p { font-size: 13px; color: #ccd; }
+        .ficha-card button { font-size: 12px; padding: 5px 8px; margin: 2px 3px 0 0; }
+        .catalogo-form input, .catalogo-form textarea, .catalogo-form select { width: 100%; box-sizing: border-box; margin: 4px 0 9px; background: #0f3460; color: white; border: 1px solid #345; padding: 8px; border-radius: 4px; }
+        .catalogo-form textarea { min-height: 65px; font-family: inherit; }
     </style>
 </head>
 <body>
@@ -53,6 +64,17 @@
             <textarea id="historico" placeholder="Histórico do personagem (resumo curto, opcional se preencher a ficha completa abaixo)"></textarea>
             <label for="ficha_completa">Ficha completa do personagem (opcional — cole aqui a ficha inteira, com habilidades, regras próprias, lore etc. Isso vai junto em toda narração, o personagem não é esquecido depois da criação.)</label>
             <textarea id="ficha_completa" placeholder="Cole aqui a ficha completa do personagem, se tiver uma..."></textarea>
+            <details class="mundo-config">
+                <summary>Configurar mundo (opcional)</summary>
+                <label for="cenario">Cenário</label>
+                <textarea id="cenario" placeholder="Onde e em que tom a história acontece?"></textarea>
+                <label for="personalidade_mestre">Personalidade do Mestre</label>
+                <textarea id="personalidade_mestre" placeholder="Como o narrador deve conduzir a história?"></textarea>
+                <label for="primeira_mensagem">Primeira mensagem</label>
+                <textarea id="primeira_mensagem" placeholder="A abertura da campanha"></textarea>
+                <label for="dialogos_exemplo">Diálogos de exemplo</label>
+                <textarea id="dialogos_exemplo" placeholder="Exemplos de tom, fala e formatação"></textarea>
+            </details>
             <button onclick="criarPersonagem()" style="width:100%;">Iniciar Aventura</button>
         </div>
         <span class="link-toggle" onclick="alternarListaCampanhas()">Ver campanhas salvas</span>
@@ -68,7 +90,30 @@
         <div class="status">
             <span class="status-text" id="status">Aguardando ação...</span>
             <button class="btn-ver-ficha" id="btn-ficha" onclick="abrirFicha()" style="display:none;">📋 Ver Ficha</button>
+            <button class="btn-catalogo" onclick="abrirCatalogo()">✦ Catálogo</button>
             <button class="btn-nova-aventura" onclick="novaAventura()">Nova Aventura</button>
+        </div>
+    </div>
+
+    <div id="modal-catalogo" class="modal" onclick="if(event.target===this) fecharCatalogo()">
+        <div class="modal-content" style="width:900px;">
+            <span class="modal-close" onclick="fecharCatalogo()">&times;</span>
+            <h3>Catálogo do mundo</h3>
+            <p style="font-size:13px;color:#b8b8d1;">Fichas canônicas são persistentes e só entram na narração quando se tornam relevantes.</p>
+            <div class="catalogo-grid" id="catalogo-lista"></div>
+            <hr style="border-color:#345;">
+            <h3 id="catalogo-form-titulo">Nova ficha</h3>
+            <div class="catalogo-form">
+                <select id="ficha-tipo"><option value="personagem">Personagem</option><option value="local">Local</option><option value="raca">Raça</option><option value="item">Item</option><option value="organizacao">Organização</option><option value="evento">Evento</option><option value="criatura">Criatura</option><option value="divindade">Divindade</option><option value="conceito">Conceito</option></select>
+                <input id="ficha-titulo" placeholder="Título da ficha">
+                <textarea id="ficha-resumo" placeholder="Resumo breve"></textarea>
+                <textarea id="ficha-conteudo" placeholder="Conteúdo livre / Markdown"></textarea>
+                <textarea id="ficha-campos" placeholder='Campos estruturados em JSON, ex.: {"região":"Norte", "perigo":3}'></textarea>
+                <input id="ficha-imagem" placeholder="URL da imagem (opcional)">
+                <input id="ficha-tags" placeholder="Tags separadas por vírgula">
+                <button onclick="salvarFicha()">Salvar ficha</button>
+                <button class="btn-nova-aventura" id="cancelar-edicao" onclick="limparFormularioFicha()" style="display:none;">Cancelar edição</button>
+            </div>
         </div>
     </div>
 
@@ -88,6 +133,7 @@
         // guardamos QUAL campanha retomar.
         const CHAVE_STORAGE = 'mestre_campanha_id';
         let campanhaId = localStorage.getItem(CHAVE_STORAGE);
+        let fichaEditando = null;
 
         // Ao carregar a página, tenta retomar a campanha salva.
         window.addEventListener('DOMContentLoaded', async () => {
@@ -132,7 +178,7 @@
 
             const chat = document.getElementById('chat');
             if (mensagemBemVindo) {
-                chat.innerHTML = '<div class="msg-ia">Bem-vindo a Alderan, viajante. O que você deseja fazer?</div>';
+                chat.innerHTML = `<div class="msg-ia">${formatarNarracao(estado.configuracao_mundo.primeira_mensagem)}</div>`;
                 const tamanhoFicha = (estado.jogador.ficha_completa || '').length;
                 if (tamanhoFicha > 0) {
                     chat.innerHTML += `<div class="msg-confirmacao">✓ Ficha completa salva (${tamanhoFicha} caracteres). Clique em "Ver Ficha" para visualizar. Ela vai junto em toda narração.</div>`;
@@ -158,6 +204,80 @@
             document.getElementById('modal-ficha').classList.remove('active');
         }
 
+        async function abrirCatalogo() {
+            document.getElementById('modal-catalogo').classList.add('active');
+            await carregarCatalogo();
+        }
+
+        function fecharCatalogo() { document.getElementById('modal-catalogo').classList.remove('active'); }
+
+        async function carregarCatalogo() {
+            const lista = document.getElementById('catalogo-lista');
+            lista.innerHTML = 'Carregando fichas...';
+            try {
+                const resp = await fetch(`/campanhas/${campanhaId}/catalogo`);
+                const fichas = await resp.json();
+                lista.innerHTML = '';
+                if (!fichas.length) { lista.innerHTML = '<i>Nenhuma ficha criada ainda.</i>'; return; }
+                fichas.forEach(f => {
+                    const card = document.createElement('div');
+                    card.className = 'ficha-card';
+                    card.innerHTML = `<small>${escapeHtml(f.tipo)}</small><h4>${escapeHtml(f.titulo)}</h4><p>${escapeHtml(f.resumo || 'Sem resumo')}</p>`;
+                    const editar = document.createElement('button'); editar.textContent = 'Editar'; editar.onclick = () => preencherFormularioFicha(f);
+                    const apagar = document.createElement('button'); apagar.textContent = 'Apagar'; apagar.className = 'btn-nova-aventura'; apagar.onclick = () => apagarFicha(f.id, f.titulo);
+                    card.append(editar, apagar); lista.appendChild(card);
+                });
+            } catch (e) { lista.innerHTML = 'Erro ao carregar o catálogo: ' + escapeHtml(e.message); }
+        }
+
+        function preencherFormularioFicha(ficha) {
+            fichaEditando = ficha.id;
+            document.getElementById('catalogo-form-titulo').textContent = 'Editar ficha';
+            document.getElementById('ficha-tipo').value = ficha.tipo;
+            document.getElementById('ficha-titulo').value = ficha.titulo;
+            document.getElementById('ficha-resumo').value = ficha.resumo || '';
+            document.getElementById('ficha-conteudo').value = ficha.conteudo || '';
+            document.getElementById('ficha-campos').value = JSON.stringify(ficha.campos || {}, null, 2);
+            document.getElementById('ficha-imagem').value = ficha.imagem || '';
+            document.getElementById('ficha-tags').value = (ficha.tags || []).join(', ');
+            document.getElementById('cancelar-edicao').style.display = 'inline-block';
+        }
+
+        function limparFormularioFicha() {
+            fichaEditando = null;
+            document.getElementById('catalogo-form-titulo').textContent = 'Nova ficha';
+            ['ficha-titulo','ficha-resumo','ficha-conteudo','ficha-campos','ficha-imagem','ficha-tags'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('ficha-tipo').value = 'personagem';
+            document.getElementById('cancelar-edicao').style.display = 'none';
+        }
+
+        async function salvarFicha() {
+            let campos = {};
+            try { campos = JSON.parse(document.getElementById('ficha-campos').value || '{}'); }
+            catch (_) { alert('Os campos estruturados precisam ser um JSON válido.'); return; }
+            const dados = {
+                tipo: document.getElementById('ficha-tipo').value,
+                titulo: document.getElementById('ficha-titulo').value.trim(),
+                resumo: document.getElementById('ficha-resumo').value.trim(),
+                conteudo: document.getElementById('ficha-conteudo').value.trim(), campos,
+                imagem: document.getElementById('ficha-imagem').value.trim(),
+                tags: document.getElementById('ficha-tags').value.split(',').map(t => t.trim()).filter(Boolean)
+            };
+            if (!dados.titulo) { alert('Dê um título à ficha.'); return; }
+            const url = fichaEditando ? `/campanhas/${campanhaId}/catalogo/${fichaEditando}` : `/campanhas/${campanhaId}/catalogo`;
+            const resp = await fetch(url, {method: fichaEditando ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dados)});
+            if (!resp.ok) { const erro = await resp.json(); alert(erro.detail || 'Não foi possível salvar a ficha.'); return; }
+            limparFormularioFicha(); await carregarCatalogo();
+        }
+
+        async function apagarFicha(id, titulo) {
+            if (!confirm(`Apagar a ficha “${titulo}”? Esta ação não pode ser desfeita.`)) return;
+            const resp = await fetch(`/campanhas/${campanhaId}/catalogo/${id}`, {method: 'DELETE'});
+            if (!resp.ok) { alert('Não foi possível apagar a ficha.'); return; }
+            if (fichaEditando === id) limparFormularioFicha();
+            await carregarCatalogo();
+        }
+
         function novaAventura() {
             if (!confirm('Isso vai abandonar a campanha atual (ela continua salva no servidor, mas você vai criar um personagem novo). Continuar?')) {
                 return;
@@ -173,6 +293,7 @@
             document.getElementById('aparencia').value = '';
             document.getElementById('historico').value = '';
             document.getElementById('ficha_completa').value = '';
+            ['cenario', 'personalidade_mestre', 'primeira_mensagem', 'dialogos_exemplo'].forEach(id => document.getElementById(id).value = '');
         }
 
         function escapeHtml(str) {
@@ -237,7 +358,11 @@
                 genero: document.getElementById('genero').value || 'Indefinido',
                 aparencia: document.getElementById('aparencia').value || 'Viajante comum',
                 historico: document.getElementById('historico').value || 'Um viajante em busca de aventuras',
-                ficha_completa: document.getElementById('ficha_completa').value || ''
+                ficha_completa: document.getElementById('ficha_completa').value || '',
+                cenario: document.getElementById('cenario').value || '',
+                personalidade_mestre: document.getElementById('personalidade_mestre').value || '',
+                primeira_mensagem: document.getElementById('primeira_mensagem').value || '',
+                dialogos_exemplo: document.getElementById('dialogos_exemplo').value || ''
             };
 
             const resp = await fetch('/campanhas', {

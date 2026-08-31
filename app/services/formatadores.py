@@ -18,6 +18,7 @@ def formatar_npcs_narrativa(estado: EstadoCompleto) -> str:
         return "nenhum"
     return "\n".join(
         f"- {n.nome} ({n.raca}): {n.aparencia} - humor: {n.humor}, relação: {n.relacao}/10"
+        + (f". Memória da relação: {n.memoria_relacao}" if n.memoria_relacao else "")
         for n in estado.estado.npc_ativos
     )
 

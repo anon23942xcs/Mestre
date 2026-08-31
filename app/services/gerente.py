@@ -22,24 +22,35 @@ from app.models.teste import ResultadoTeste
 from app.prompts.preencher import preencher
 from app.services.formatadores import formatar_npcs_resumo, formatar_teste_gerente
 from app.services.ia_client import gerar_json, ErroIA, ErroFormatoIA
+from app.services.wiki_gerente import aplicar_patch_wiki
 
 PROMPT = """Você é o Gerente de estado de um RPG. Sua função é decidir como o mundo reage à ação do jogador, NÃO narrar em prosa.
 
 Responda APENAS com um JSON válido, sem texto antes ou depois, sem cercas de código markdown, no formato:
 {
   "npc_atualizados": [
-    {"id": "id do npc existente", "humor": "novo humor ou null para manter", "relacao_delta": número inteiro pequeno (-3 a 3) ou 0, "novo_segredo": "texto ou null"}
+    {"id": "id do npc existente", "humor": "novo humor ou null para manter", "relacao_delta": número inteiro pequeno (-3 a 3) ou 0, "novo_segredo": "texto ou null", "ultima_interacao": "resumo curto ou null", "memoria_relacao": "resumo canônico da relação ou null"}
   ],
+  "npcs_saem_de_cena": [{"id": "id do NPC presente", "local_ausente": "onde foi parar"}],
+  "npcs_entram_em_cena": ["id de NPC ausente que volta a ser relevante"],
   "npc_novo": {"id": "id_curto_unico", "nome": "...", "raca": "...", "aparencia": "...", "humor": "...", "relacao": 0} ou null se nenhum NPC novo apareceu,
   "eventos_novos": ["lista de novos eventos ativos, vazio se nenhum"],
   "eventos_removidos": ["eventos que deixaram de ser ativos, vazio se nenhum"],
   "memoria_importante_nova": "um fato canônico que deve ser lembrado a longo prazo, ou null",
   "progresso_delta": número inteiro entre -5 e 10 representando avanço no arco principal, 0 se nada mudou,
   "local_novo": "novo local ou null se não mudou",
-  "hora_nova": "novo horário ou null se não mudou"
+  "hora_nova": "novo horário ou null se não mudou",
+  "patch_wiki": {
+    "fichas_atualizadas": [{"id": "id da ficha", "campos": {"chave": "valor"}, "conteudo_append": "texto ou null"}],
+    "ficha_nova": {"tipo": "tipo válido", "titulo": "..."} ou null,
+    "relacao_adicionada": [{"origem": "id", "tipo_relacao": "...", "destino": "id"}],
+    "relacao_removida": [{"origem": "id", "tipo_relacao": "...", "destino": "id"}]
+  } ou {} se nenhum fato canônico da Wiki mudou
 }
 
 Só inclua mudanças que façam sentido causadas pela ação do jogador. Não invente eventos grandes sem motivo.
+Quando uma ficha mudar, use patch_wiki. Relações sempre usam IDs; remover uma
+relação NÃO apaga a ficha de destino. Não crie patch_wiki para diálogo comum.
 
 [ESTADO ATUAL]
 Local: {local} - {hora}
@@ -92,7 +103,7 @@ def atualizar_estado(
 
 
 def aplicar_patch(estado: EstadoCompleto, patch: dict) -> None:
-    npcs_por_id = {n.id: n for n in estado.estado.npc_ativos}
+    npcs_por_id = {n.id: n for n in estado.estado.npc_ativos + estado.estado.npc_ausentes}
 
     for atualizacao in patch.get("npc_atualizados") or []:
         if not isinstance(atualizacao, dict):
@@ -107,6 +118,10 @@ def aplicar_patch(estado: EstadoCompleto, patch: dict) -> None:
             npc.relacao = max(-10, min(10, npc.relacao + int(delta)))
         if atualizacao.get("novo_segredo"):
             npc.segredos.append(str(atualizacao["novo_segredo"]))
+        if atualizacao.get("ultima_interacao"):
+            npc.ultima_interacao = str(atualizacao["ultima_interacao"])
+        if atualizacao.get("memoria_relacao"):
+            npc.memoria_relacao = str(atualizacao["memoria_relacao"])
 
     npc_novo = patch.get("npc_novo")
     if isinstance(npc_novo, dict) and npc_novo.get("id") not in npcs_por_id:
@@ -114,6 +129,26 @@ def aplicar_patch(estado: EstadoCompleto, patch: dict) -> None:
             estado.estado.npc_ativos.append(NPC(**npc_novo))
         except Exception:
             pass  # patch malformado para o novo NPC, ignora em vez de travar
+
+    # A presença é uma mudança de estado explícita: o NPC não é apagado ao
+    # deixar a cena e, por estar em ``npc_ausentes``, não entra no prompt.
+    for saida in patch.get("npcs_saem_de_cena") or []:
+        if not isinstance(saida, dict):
+            continue
+        npc = next((n for n in estado.estado.npc_ativos if n.id == saida.get("id")), None)
+        if npc:
+            estado.estado.npc_ativos.remove(npc)
+            npc.presente = False
+            npc.local_ausente = str(saida.get("local_ausente") or "desconhecido")
+            estado.estado.npc_ausentes.append(npc)
+
+    for npc_id in patch.get("npcs_entram_em_cena") or []:
+        npc = next((n for n in estado.estado.npc_ausentes if n.id == str(npc_id)), None)
+        if npc:
+            estado.estado.npc_ausentes.remove(npc)
+            npc.presente = True
+            npc.local_ausente = ""
+            estado.estado.npc_ativos.append(npc)
 
     for evento in patch.get("eventos_novos") or []:
         evento = str(evento)
@@ -138,6 +173,10 @@ def aplicar_patch(estado: EstadoCompleto, patch: dict) -> None:
         estado.estado.local = str(patch["local_novo"])
     if patch.get("hora_nova"):
         estado.estado.hora = str(patch["hora_nova"])
+
+    # A Wiki compartilha o JSON do Gerente, mas mantém modelo e persistência
+    # próprios. Um patch malformado é ignorado sem comprometer o turno.
+    aplicar_patch_wiki(estado, patch.get("patch_wiki"))
 
 
 def _registrar_memoria_recente(estado: EstadoCompleto, texto: str) -> None:

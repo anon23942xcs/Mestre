@@ -12,6 +12,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 from app.models.estado import EstadoCompleto
+from app.models.ficha import TipoFicha
 from app.models.teste import ResultadoTeste
 
 
@@ -27,6 +28,10 @@ class CriarPersonagemRequest(BaseModel):
     # Narrador em todo turno, então o personagem não "some" depois da
     # criação.
     ficha_completa: str = Field(default="", max_length=20000)
+    cenario: str = Field(default="", max_length=12000)
+    personalidade_mestre: str = Field(default="", max_length=8000)
+    primeira_mensagem: str = Field(default="", max_length=4000)
+    dialogos_exemplo: str = Field(default="", max_length=12000)
 
 
 class AcaoRequest(BaseModel):
@@ -42,3 +47,17 @@ class RespostaAcao(BaseModel):
     erro: Optional[str] = None
     # Resultado do teste de dados, quando a ação exigiu um (ver services/dados.py).
     teste: Optional[ResultadoTeste] = None
+
+
+class FichaMundoRequest(BaseModel):
+    tipo: TipoFicha
+    titulo: str = Field(min_length=1, max_length=160)
+    resumo: str = Field(default="", max_length=1000)
+    conteudo: str = Field(default="", max_length=30000)
+    campos: dict = Field(default_factory=dict)
+    imagem: str = Field(default="", max_length=2000)
+    tags: list[str] = Field(default_factory=list, max_length=30)
+
+
+class PresencaNPCRequest(BaseModel):
+    local_ausente: str = Field(default="", max_length=300)

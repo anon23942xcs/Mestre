@@ -13,10 +13,16 @@ vez do antigo arquivo global único.
 """
 from fastapi import APIRouter, HTTPException
 
-from app.models.estado import EstadoCompleto, Jogador
-from app.models.requests import AcaoRequest, CriarPersonagemRequest, RespostaAcao
+from app.models.estado import ConfiguracaoMundo, EstadoCompleto, Jogador
+from app.models.requests import (
+    AcaoRequest,
+    CriarPersonagemRequest,
+    PresencaNPCRequest,
+    RespostaAcao,
+)
 from app.services import pipeline
 from app.services.estado_inicial import criar_estado_inicial
+from app.services.fichas_jogador import organizar_ficha_markdown
 from app.services.ia_client import ErroIA
 from app.storage import repositorio
 
@@ -40,9 +46,25 @@ async def criar_campanha(dados: CriarPersonagemRequest):
             aparencia=dados.aparencia.strip(),
             historico=dados.historico.strip(),
             ficha_completa=dados.ficha_completa.strip(),
+            ficha_estruturada=organizar_ficha_markdown(dados.ficha_completa),
+        ),
+        ConfiguracaoMundo(
+            cenario=dados.cenario.strip() or ConfiguracaoMundo().cenario,
+            personalidade=dados.personalidade_mestre.strip() or ConfiguracaoMundo().personalidade,
+            primeira_mensagem=dados.primeira_mensagem.strip() or ConfiguracaoMundo().primeira_mensagem,
+            dialogos_exemplo=dados.dialogos_exemplo.strip() or ConfiguracaoMundo().dialogos_exemplo,
         ),
     )
     repositorio.salvar(estado)
+    # A Wiki é persistida fora do estado dinâmico da campanha.
+    from app.models.ficha import FichaMundo
+    from app.storage import ficha_repositorio
+    ficha_repositorio.salvar(campanha_id, FichaMundo(
+        id="ficha_estalajadeira", tipo="personagem", titulo="A Estalajadeira do Cão Caído",
+        resumo="Dona da taverna inicial; conhece os rumores de Alderan.",
+        conteudo="Uma humana prática e observadora. Sua confiança precisa ser conquistada.",
+        tags=["alderan", "taverna", "npc"],
+    ))
     return estado
 
 
@@ -86,6 +108,40 @@ async def obter_campanha(campanha_id: str):
     return estado
 
 
+@router.post("/{campanha_id}/npcs/{npc_id}/sair", response_model=EstadoCompleto)
+async def npc_sair_de_cena(campanha_id: str, npc_id: str, dados: PresencaNPCRequest):
+    with repositorio.bloqueio(campanha_id):
+        estado = repositorio.carregar(campanha_id)
+        if not estado:
+            raise HTTPException(status_code=404, detail="Campanha não encontrada")
+        npc = next((n for n in estado.estado.npc_ativos if n.id == npc_id), None)
+        if not npc:
+            raise HTTPException(status_code=404, detail="NPC presente não encontrado")
+        estado.estado.npc_ativos.remove(npc)
+        npc.presente = False
+        npc.local_ausente = dados.local_ausente
+        estado.estado.npc_ausentes.append(npc)
+        repositorio.salvar(estado)
+    return estado
+
+
+@router.post("/{campanha_id}/npcs/{npc_id}/voltar", response_model=EstadoCompleto)
+async def npc_voltar_a_cena(campanha_id: str, npc_id: str):
+    with repositorio.bloqueio(campanha_id):
+        estado = repositorio.carregar(campanha_id)
+        if not estado:
+            raise HTTPException(status_code=404, detail="Campanha não encontrada")
+        npc = next((n for n in estado.estado.npc_ausentes if n.id == npc_id), None)
+        if not npc:
+            raise HTTPException(status_code=404, detail="NPC ausente não encontrado")
+        estado.estado.npc_ausentes.remove(npc)
+        npc.presente = True
+        npc.local_ausente = ""
+        estado.estado.npc_ativos.append(npc)
+        repositorio.salvar(estado)
+    return estado
+
+
 @router.delete("/{campanha_id}")
 async def apagar_campanha(campanha_id: str):
     try:
@@ -94,4 +150,6 @@ async def apagar_campanha(campanha_id: str):
         raise HTTPException(status_code=400, detail="campanha_id inválido")
     if not apagado:
         raise HTTPException(status_code=404, detail="Campanha não encontrada")
+    from app.storage import ficha_repositorio
+    ficha_repositorio.deletar_da_campanha(campanha_id)
     return {"mensagem": "Campanha apagada"}
