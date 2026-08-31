@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Mestre - RPG com IA</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 0 auto; padding: 20px; background: #1a1a2e; color: #eee; }
+        .chat { background: #16213e; padding: 20px; border-radius: 10px; height: 400px; overflow-y: auto; margin-bottom: 20px; }
+        .msg-user { background: #0f3460; padding: 10px; margin: 5px 0; border-radius: 5px; text-align: right; }
+        .msg-ia { background: #1a1a2e; padding: 10px; margin: 5px 0; border-radius: 5px; border-left: 3px solid #e94560; }
+        .msg-teste { background: #16213e; padding: 6px 10px; margin: 5px 0; border-radius: 5px; font-size: 12px; color: #f4d35e; border-left: 3px solid #f4d35e; }
+        .msg-erro { background: #3a1a1a; padding: 10px; margin: 5px 0; border-radius: 5px; border-left: 3px solid #e94560; font-size: 12px; }
+        input, button, textarea { padding: 10px; font-size: 16px; border: none; border-radius: 5px; }
+        input { flex: 1; background: #0f3460; color: white; }
+        button { background: #e94560; color: white; cursor: pointer; margin-left: 10px; }
+        .form-row { display: flex; }
+        .status { margin-top: 10px; padding: 10px; background: #0f3460; border-radius: 5px; font-size: 12px; }
+        .login-form { background: #16213e; padding: 20px; border-radius: 10px; }
+        .login-form input, .login-form textarea { width: 100%; margin-bottom: 5px; background: #0f3460; color: white; border: 1px solid #1a1a2e; }
+        .login-form textarea { height: 60px; }
+        h1 { color: #e94560; }
+    </style>
+</head>
+<body>
+    <h1>Mestre</h1>
+    <p><i>Motor de RPG com IA - Interface de Teste</i></p>
+
+    <div id="personagem-area">
+        <h3>Criar Personagem</h3>
+        <div class="login-form">
+            <input type="text" id="nome" placeholder="Nome">
+            <input type="number" id="idade" placeholder="Idade">
+            <input type="text" id="genero" placeholder="Gênero">
+            <input type="text" id="aparencia" placeholder="Aparência">
+            <textarea id="historico" placeholder="Histórico do personagem"></textarea>
+            <button onclick="criarPersonagem()" style="width:100%;">Iniciar Aventura</button>
+        </div>
+    </div>
+
+    <div id="chat-area" style="display:none;">
+        <div class="chat" id="chat"></div>
+        <div class="form-row">
+            <input type="text" id="mensagem" placeholder="O que você faz?" onkeypress="if(event.key==='Enter') enviarMensagem()">
+            <button onclick="enviarMensagem()">Enviar</button>
+        </div>
+        <div class="status" id="status">Aguardando ação...</div>
+    </div>
+
+    <script>
+        // Diferença chave em relação à versão anterior: o front-end guarda
+        // só o campanhaId, não o estado inteiro. O servidor é quem mantém
+        // e valida o estado, o navegador não consegue mais adulterar
+        // pv/atributos/inventário editando uma variável local.
+        let campanhaId = null;
+
+        async function criarPersonagem() {
+            const dados = {
+                nome: document.getElementById('nome').value || 'Aventureiro',
+                idade: parseInt(document.getElementById('idade').value) || 20,
+                genero: document.getElementById('genero').value || 'Indefinido',
+                aparencia: document.getElementById('aparencia').value || 'Viajante comum',
+                historico: document.getElementById('historico').value || 'Um viajante em busca de aventuras'
+            };
+
+            const resp = await fetch('/campanhas', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(dados)
+            });
+
+            if (!resp.ok) {
+                alert('Erro ao criar personagem: ' + resp.status);
+                return;
+            }
+
+            const estado = await resp.json();
+            campanhaId = estado.campanha_id;
+
+            document.getElementById('personagem-area').style.display = 'none';
+            document.getElementById('chat-area').style.display = 'block';
+            document.getElementById('status').innerHTML = 'Personagem criado! Envie sua primeira ação. (campanha ' + campanhaId + ')';
+
+            const chat = document.getElementById('chat');
+            chat.innerHTML = '<div class="msg-ia">Bem-vindo a Alderan, viajante. O que você deseja fazer?</div>';
+        }
+
+        async function enviarMensagem() {
+            const input = document.getElementById('mensagem');
+            const msg = input.value.trim();
+            if (!msg || !campanhaId) return;
+
+            input.value = '';
+
+            const chat = document.getElementById('chat');
+            chat.innerHTML += `<div class="msg-user">${msg}</div>`;
+            chat.scrollTop = chat.scrollHeight;
+
+            document.getElementById('status').innerHTML = 'O Mestre está pensando...';
+
+            try {
+                const resp = await fetch(`/campanhas/${campanhaId}/acao`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ mensagem: msg })
+                });
+
+                const dados = await resp.json();
+
+                if (!resp.ok) {
+                    chat.innerHTML += `<div class="msg-erro">Erro: ${dados.detail || resp.status}</div>`;
+                    document.getElementById('status').innerHTML = 'Erro ao processar ação.';
+                    return;
+                }
+
+                if (dados.teste) {
+                    const t = dados.teste;
+                    const status = t.critico_sucesso ? 'sucesso crítico' : (t.critico_falha ? 'falha crítica' : (t.sucesso ? 'sucesso' : 'falha'));
+                    chat.innerHTML += `<div class="msg-teste">Teste de dados: ${t.rolagem} + ${t.atributo} = ${t.total} vs CD ${t.dificuldade} (${status})</div>`;
+                }
+
+                chat.innerHTML += `<div class="msg-ia">${dados.resposta}</div>`;
+
+                if (dados.erro) {
+                    chat.innerHTML += `<div class="msg-erro">Aviso técnico: ${dados.erro}</div>`;
+                }
+
+                chat.scrollTop = chat.scrollHeight;
+
+                document.getElementById('status').innerHTML = `${dados.estado.estado.local} - ${dados.estado.estado.hora} | turno ${dados.estado.turno}`;
+            } catch (e) {
+                document.getElementById('status').innerHTML = 'Erro: ' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>
