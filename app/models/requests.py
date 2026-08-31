@@ -7,27 +7,30 @@ campanha_id; o servidor carrega o estado do disco, que é a única fonte de
 verdade. Isso fecha a brecha de um jogador editar pv/atributos/inventário
 direto no JavaScript do navegador antes de reenviar.
 """
-from pydantic import BaseModel
 from typing import Optional
+
+from pydantic import BaseModel, Field
+
 from app.models.estado import EstadoCompleto
+from app.models.teste import ResultadoTeste
 
 
 class CriarPersonagemRequest(BaseModel):
-    nome: str
-    idade: int
-    genero: str
-    aparencia: str
-    historico: str
+    nome: str = Field(min_length=1, max_length=80)
+    idade: int = Field(ge=1, le=200)
+    genero: str = Field(min_length=1, max_length=40)
+    aparencia: str = Field(min_length=1, max_length=500)
+    historico: str = Field(default="", max_length=4000)
     # Campo livre para colar uma ficha de personagem inteira (habilidades,
     # regras próprias, histórico detalhado, etc.), diferente de "historico"
     # que é pensado para um resumo curto. Vai inteiro para o prompt do
     # Narrador em todo turno, então o personagem não "some" depois da
     # criação.
-    ficha_completa: str = ""
+    ficha_completa: str = Field(default="", max_length=20000)
 
 
 class AcaoRequest(BaseModel):
-    mensagem: str
+    mensagem: str = Field(min_length=1, max_length=4000)
 
 
 class RespostaAcao(BaseModel):
@@ -38,4 +41,4 @@ class RespostaAcao(BaseModel):
     # de API virava texto de narração misturado com a ficção.
     erro: Optional[str] = None
     # Resultado do teste de dados, quando a ação exigiu um (ver services/dados.py).
-    teste: Optional[dict] = None
+    teste: Optional[ResultadoTeste] = None

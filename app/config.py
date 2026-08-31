@@ -5,15 +5,19 @@ Antes, cada arquivo (main.py e ia_service.py) carregava o .env e configurava
 o Gemini separadamente, de forma duplicada. Agora existe um único lugar de
 verdade para isso.
 """
+import logging
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()
 
+logger = logging.getLogger("mestre")
+
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / "data"
-DATA_DIR.mkdir(exist_ok=True)
+DATA_DIR = Path(os.getenv("MESTRE_DATA_DIR") or BASE_DIR / "data")
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
@@ -29,11 +33,13 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 TURNOS_POR_COMPILACAO = int(os.getenv("TURNOS_POR_COMPILACAO", "10"))
 
 # Quantas memórias recentes (brutas) ficam guardadas antes de começar a
-# descartar as mais antigas.
-LIMITE_MEMORIAS_RECENTES = int(os.getenv("LIMITE_MEMORIAS_RECENTES", "8"))
+# descartar as mais antigas. Duas entradas por turno (jogador + mestre).
+LIMITE_MEMORIAS_RECENTES = int(os.getenv("LIMITE_MEMORIAS_RECENTES", "16"))
 
 # Máximo de memórias importantes (destiladas) mantidas pelo Compilador.
 LIMITE_MEMORIAS_IMPORTANTES = int(os.getenv("LIMITE_MEMORIAS_IMPORTANTES", "5"))
 
 if not GEMINI_API_KEY:
-    print("AVISO: GEMINI_API_KEY não encontrada no .env. A IA vai recusar chamadas até isso ser configurado.")
+    logger.warning(
+        "GEMINI_API_KEY não encontrada no .env. A IA vai recusar chamadas até isso ser configurado."
+    )

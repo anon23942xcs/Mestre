@@ -8,12 +8,13 @@ importava para memorias_importantes. Esta função fecha essa lacuna.
 """
 from app.config import LIMITE_MEMORIAS_IMPORTANTES
 from app.models.estado import EstadoCompleto
+from app.prompts.preencher import preencher
 from app.services.ia_client import gerar_json, ErroIA, ErroFormatoIA
 
 PROMPT = """Você resume o progresso recente de uma campanha de RPG em fatos canônicos de longo prazo.
 
 Responda APENAS com um JSON válido, sem texto antes ou depois, sem cercas de código markdown, no formato:
-{{"memorias_importantes": ["fato canônico 1", "fato canônico 2", ...]}}
+{"memorias_importantes": ["fato canônico 1", "fato canônico 2", ...]}
 
 Regras:
 - No máximo {limite} memórias importantes no total.
@@ -33,7 +34,8 @@ def compilar(estado: EstadoCompleto) -> EstadoCompleto:
     if not estado.estado.memorias_recentes:
         return estado
 
-    prompt = PROMPT.format(
+    prompt = preencher(
+        PROMPT,
         limite=LIMITE_MEMORIAS_IMPORTANTES,
         existentes="\n".join(estado.estado.memorias_importantes) or "nenhuma ainda",
         recentes="\n".join(estado.estado.memorias_recentes),

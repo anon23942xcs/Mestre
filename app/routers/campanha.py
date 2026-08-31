@@ -13,11 +13,12 @@ vez do antigo arquivo global único.
 """
 from fastapi import APIRouter, HTTPException
 
-from app.models.estado import EstadoCompleto, Jogador, Estado, Campanha
-from app.models.requests import CriarPersonagemRequest, AcaoRequest, RespostaAcao
-from app.storage import repositorio
+from app.models.estado import EstadoCompleto, Jogador
+from app.models.requests import AcaoRequest, CriarPersonagemRequest, RespostaAcao
 from app.services import pipeline
+from app.services.estado_inicial import criar_estado_inicial
 from app.services.ia_client import ErroIA
+from app.storage import repositorio
 
 router = APIRouter(prefix="/campanhas", tags=["campanhas"])
 
@@ -30,33 +31,16 @@ async def listar_campanhas():
 @router.post("", response_model=EstadoCompleto)
 async def criar_campanha(dados: CriarPersonagemRequest):
     campanha_id = repositorio.novo_id()
-    estado = EstadoCompleto(
-        campanha_id=campanha_id,
-        jogador=Jogador(
-            nome=dados.nome,
+    estado = criar_estado_inicial(
+        campanha_id,
+        Jogador(
+            nome=dados.nome.strip(),
             idade=dados.idade,
-            genero=dados.genero,
-            aparencia=dados.aparencia,
-            historico=dados.historico,
-            ficha_completa=dados.ficha_completa,
+            genero=dados.genero.strip(),
+            aparencia=dados.aparencia.strip(),
+            historico=dados.historico.strip(),
+            ficha_completa=dados.ficha_completa.strip(),
         ),
-        estado=Estado(
-            local="Taverna do Cão Caído - Alderan",
-            clima="nublado",
-            npc_ativos=[
-                {
-                    "id": "npc_001",
-                    "nome": "Estalajadeira",
-                    "raca": "humano",
-                    "aparencia": "mulher robusta, avental manchado, cabelo preso",
-                    "humor": "indiferente",
-                    "relacao": 0,
-                    "segredos": [],
-                    "ultima_interacao": "observa o novo cliente",
-                }
-            ],
-        ),
-        campanha=Campanha(arco_principal="Em busca de vingança"),
     )
     repositorio.salvar(estado)
     return estado
@@ -64,19 +48,24 @@ async def criar_campanha(dados: CriarPersonagemRequest):
 
 @router.post("/{campanha_id}/acao", response_model=RespostaAcao)
 async def processar_acao(campanha_id: str, requisicao: AcaoRequest):
-    if not requisicao.mensagem.strip():
+    mensagem = requisicao.mensagem.strip()
+    if not mensagem:
         raise HTTPException(status_code=400, detail="Mensagem obrigatória")
 
-    estado = repositorio.carregar(campanha_id)
-    if not estado:
-        raise HTTPException(status_code=404, detail="Campanha não encontrada")
-
     try:
-        resultado = pipeline.processar_turno(estado, requisicao.mensagem)
-    except ErroIA as e:
-        raise HTTPException(status_code=502, detail=f"Erro ao falar com a IA: {e}")
+        with repositorio.bloqueio(campanha_id):
+            estado = repositorio.carregar(campanha_id)
+            if not estado:
+                raise HTTPException(status_code=404, detail="Campanha não encontrada")
 
-    repositorio.salvar(resultado.estado)
+            try:
+                resultado = pipeline.processar_turno(estado, mensagem)
+            except ErroIA as e:
+                raise HTTPException(status_code=502, detail=f"Erro ao falar com a IA: {e}")
+
+            repositorio.salvar(resultado.estado)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="campanha_id inválido")
 
     return RespostaAcao(
         resposta=resultado.resposta,
@@ -88,7 +77,10 @@ async def processar_acao(campanha_id: str, requisicao: AcaoRequest):
 
 @router.get("/{campanha_id}", response_model=EstadoCompleto)
 async def obter_campanha(campanha_id: str):
-    estado = repositorio.carregar(campanha_id)
+    try:
+        estado = repositorio.carregar(campanha_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="campanha_id inválido")
     if not estado:
         raise HTTPException(status_code=404, detail="Campanha não encontrada")
     return estado
@@ -96,7 +88,10 @@ async def obter_campanha(campanha_id: str):
 
 @router.delete("/{campanha_id}")
 async def apagar_campanha(campanha_id: str):
-    apagado = repositorio.deletar(campanha_id)
+    try:
+        apagado = repositorio.deletar(campanha_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="campanha_id inválido")
     if not apagado:
         raise HTTPException(status_code=404, detail="Campanha não encontrada")
     return {"mensagem": "Campanha apagada"}

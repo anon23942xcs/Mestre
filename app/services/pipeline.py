@@ -14,6 +14,12 @@ A ordem é:
 Cada passo tem fallback: se um passo de IA falhar, o pipeline não trava o
 turno inteiro, ele degrada (por exemplo, sem atualizar NPCs desta vez) e
 ainda assim devolve uma resposta ao jogador.
+
+AVISO DE ESCALABILIDADE:
+Se adicionar mais de 2-3 novos passos além destes 5, considere refatorar
+para factory pattern ou chain of responsibility em vez de continuar
+adicionando ifs/imports. Hoje é linear e simples. Com >7-8 passos fica
+complexo manter.
 """
 from dataclasses import dataclass
 from datetime import datetime
@@ -21,7 +27,8 @@ from typing import Optional
 
 from app.config import TURNOS_POR_COMPILACAO
 from app.models.estado import EstadoCompleto
-from app.services import interprete, gerente, narrador, compilador, dados
+from app.models.teste import ResultadoTeste
+from app.services import compilador, dados, gerente, interprete, narrador
 from app.services.ia_client import ErroIA
 
 
@@ -30,7 +37,7 @@ class ResultadoTurno:
     resposta: str
     estado: EstadoCompleto
     erro: Optional[str]
-    teste: Optional[dict]
+    teste: Optional[ResultadoTeste]
 
 
 def processar_turno(estado: EstadoCompleto, mensagem: str) -> ResultadoTurno:
@@ -57,6 +64,8 @@ def processar_turno(estado: EstadoCompleto, mensagem: str) -> ResultadoTurno:
         resposta = "O Mestre hesita por um momento, tentando organizar os pensamentos... (não foi possível gerar a narração desta vez)"
         erro = str(e)
 
+    gerente.registrar_resposta_mestre(estado, resposta)
+    estado.ultima_narracao = resposta
     estado.turno += 1
     estado.ultima_atualizacao = datetime.now().isoformat()
 

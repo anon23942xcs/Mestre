@@ -13,6 +13,13 @@ Parecido com o gerar_resposta() original, mas com duas diferenças:
 from typing import Optional
 
 from app.models.estado import EstadoCompleto
+from app.models.teste import ResultadoTeste
+from app.prompts.preencher import preencher
+from app.services.formatadores import (
+    formatar_memorias,
+    formatar_npcs_narrativa,
+    formatar_teste_narrador,
+)
 from app.services.ia_client import gerar_texto
 
 PROMPT = """[INSTRUÇÕES DO MESTRE]
@@ -28,6 +35,7 @@ PROMPT = """[INSTRUÇÕES DO MESTRE]
   Exemplo ERRADO (não faça isso): *"A taverna só abre mais tarde,"* ela resmunga.
 - Use SEMPRE essa mistura de asteriscos e aspas, nunca escreva a cena inteira em um único parágrafo de prosa corrida sem essas marcações.
 - Respeite a ficha completa do personagem abaixo (se houver): habilidades, limitações, regras próprias e tom descrito nela têm prioridade sobre suposições genéricas de RPG de fantasia.
+- Continue a partir da cena anterior e das memórias recentes. Não reinicie a cena do zero.
 
 [ESTADO DO MUNDO]
 Mundo: {mundo}
@@ -36,9 +44,11 @@ Mundo: {mundo}
 Nome: {nome}
 Aparência: {aparencia}
 Histórico: {historico}
-Ficha completa do personagem: {ficha_completa}
 Inventário: {inventario}
 PV: {pv}/{pv_max}
+
+[FICHA COMPLETA DO PERSONAGEM]
+{ficha_completa}
 
 [LOCAL]
 {local} - {hora}, clima {clima}
@@ -52,6 +62,12 @@ PV: {pv}/{pv_max}
 [MEMÓRIAS IMPORTANTES]
 {memorias_importantes}
 
+[TURNOS RECENTES]
+{memorias_recentes}
+
+[CENA ANTERIOR]
+{cena_anterior}
+
 [RESULTADO DE TESTE DE DADOS]
 {resultado_teste}
 
@@ -63,29 +79,9 @@ Escreva a narração em prosa, mantendo a imersão e a coerência. Não controle
 """
 
 
-def _formatar_npcs(estado: EstadoCompleto) -> str:
-    if not estado.estado.npc_ativos:
-        return "nenhum"
-    linhas = [
-        f"- {n.nome} ({n.raca}): {n.aparencia} - humor: {n.humor}, relação: {n.relacao}/10"
-        for n in estado.estado.npc_ativos
-    ]
-    return "\n".join(linhas)
-
-
-def _formatar_resultado_teste(resultado_teste: Optional[dict]) -> str:
-    if not resultado_teste:
-        return "Nenhum teste foi necessário para esta ação."
-    if resultado_teste["critico_sucesso"]:
-        return "Sucesso crítico! A ação deu muito mais certo do que o esperado."
-    if resultado_teste["critico_falha"]:
-        return "Falha crítica! Algo deu muito errado, além do esperado."
-    status = "SUCESSO" if resultado_teste["sucesso"] else "FALHA"
-    return f"{status} (rolagem {resultado_teste['rolagem']} + atributo {resultado_teste['atributo']} = {resultado_teste['total']}, contra dificuldade {resultado_teste['dificuldade']})"
-
-
-def narrar(estado: EstadoCompleto, mensagem: str, resultado_teste: Optional[dict] = None) -> str:
-    prompt = PROMPT.format(
+def narrar(estado: EstadoCompleto, mensagem: str, resultado_teste: Optional[ResultadoTeste] = None) -> str:
+    prompt = preencher(
+        PROMPT,
         mundo=estado.mundo,
         nome=estado.jogador.nome,
         aparencia=estado.jogador.aparencia,
@@ -97,10 +93,12 @@ def narrar(estado: EstadoCompleto, mensagem: str, resultado_teste: Optional[dict
         local=estado.estado.local,
         hora=estado.estado.hora,
         clima=estado.estado.clima,
-        npcs=_formatar_npcs(estado),
+        npcs=formatar_npcs_narrativa(estado),
         eventos=", ".join(estado.estado.eventos_ativos) or "nenhum evento ativo",
-        memorias_importantes=", ".join(estado.estado.memorias_importantes) or "nenhuma ainda",
-        resultado_teste=_formatar_resultado_teste(resultado_teste),
+        memorias_importantes=formatar_memorias(estado.estado.memorias_importantes, "nenhuma ainda"),
+        memorias_recentes=formatar_memorias(estado.estado.memorias_recentes, "nenhum turno recente"),
+        cena_anterior=estado.ultima_narracao or "início da campanha",
+        resultado_teste=formatar_teste_narrador(resultado_teste),
         mensagem=mensagem,
     )
     texto = gerar_texto(prompt)

@@ -71,5 +71,8 @@ class EstadoCompleto(BaseModel):
     estado: Estado
     campanha: Campanha = Field(default_factory=Campanha)
     turno: int = 0
+    # Última prosa do Narrador. Serve para retomar a cena ao recarregar a
+    # página e como contexto imediato no turno seguinte.
+    ultima_narracao: str = ""
     data_criacao: str = Field(default_factory=lambda: datetime.now().isoformat())
     ultima_atualizacao: str = Field(default_factory=lambda: datetime.now().isoformat())

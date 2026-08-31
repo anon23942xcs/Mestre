@@ -16,8 +16,6 @@ Mudanças nesta versão:
 """
 import json
 import re
-from typing import Optional
-
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
@@ -44,7 +42,14 @@ _GENERATION_CONFIG = {
 }
 
 _modelo = None
-if GEMINI_API_KEY:
+
+
+def _obter_modelo():
+    global _modelo
+    if _modelo is not None:
+        return _modelo
+    if not GEMINI_API_KEY:
+        return None
     genai.configure(api_key=GEMINI_API_KEY)
     _modelo = genai.GenerativeModel(
         GEMINI_MODEL,
@@ -52,19 +57,29 @@ if GEMINI_API_KEY:
         generation_config=_GENERATION_CONFIG,
         safety_settings=_SAFETY_SETTINGS,
     )
+    return _modelo
 
 
 def disponivel() -> bool:
-    return _modelo is not None
+    return _obter_modelo() is not None
 
 
 def gerar_texto(prompt: str) -> str:
     """Chama a IA e devolve o texto puro da resposta."""
-    if _modelo is None:
+    modelo = _obter_modelo()
+    if modelo is None:
         raise ErroIA("GEMINI_API_KEY não configurada. Defina-a no arquivo .env.")
     try:
-        resposta = _modelo.generate_content(prompt)
-        return resposta.text.strip()
+        resposta = modelo.generate_content(prompt)
+        try:
+            texto = resposta.text
+        except ValueError as e:
+            raise ErroIA(f"A IA devolveu resposta vazia ou bloqueada: {e}") from e
+        if not texto or not texto.strip():
+            raise ErroIA("A IA devolveu resposta vazia.")
+        return texto.strip()
+    except ErroIA:
+        raise
     except Exception as e:
         raise ErroIA(f"Falha ao chamar a IA: {e}") from e
 
@@ -78,14 +93,14 @@ def gerar_json(prompt: str) -> dict:
     então extraímos o bloco antes de tentar o parse.
     """
     texto = gerar_texto(prompt)
-    texto_limpo = _extrair_json(texto)
+    texto_limpo = extrair_json(texto)
     try:
         return json.loads(texto_limpo)
     except json.JSONDecodeError as e:
         raise ErroFormatoIA(f"A IA não devolveu um JSON válido: {e}. Resposta bruta: {texto[:200]}") from e
 
 
-def _extrair_json(texto: str) -> str:
+def extrair_json(texto: str) -> str:
     # Remove cercas de código markdown, se existirem.
     match = re.search(r"```(?:json)?\s*(\{.*\}|\[.*\])\s*```", texto, re.DOTALL)
     if match:

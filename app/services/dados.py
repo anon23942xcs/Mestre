@@ -15,6 +15,8 @@ cima dele, não o contrário.
 import random
 from typing import Literal
 
+from app.models.teste import ResultadoTeste
+
 TipoAcao = Literal["combate", "social", "exploracao", "outro"]
 
 # Mapa de qual atributo do jogador é testado para cada tipo de ação.
@@ -30,27 +32,24 @@ def rolar_d20() -> int:
     return random.randint(1, 20)
 
 
-def resolver_teste(valor_atributo: int, dificuldade: int = 12) -> dict:
+def resolver_teste(valor_atributo: int, dificuldade: int = 12) -> ResultadoTeste:
     """
     Rola 1d20 + atributo contra uma dificuldade (CD).
-
-    Retorna um dicionário serializável em JSON, usado tanto para decidir o
-    que aconteceu quanto para mostrar ao jogador o que foi rolado.
     """
     rolagem = rolar_d20()
     total = rolagem + valor_atributo
     critico_sucesso = rolagem == 20
     critico_falha = rolagem == 1
     sucesso = critico_sucesso or (not critico_falha and total >= dificuldade)
-    return {
-        "rolagem": rolagem,
-        "atributo": valor_atributo,
-        "total": total,
-        "dificuldade": dificuldade,
-        "sucesso": sucesso,
-        "critico_sucesso": critico_sucesso,
-        "critico_falha": critico_falha,
-    }
+    return ResultadoTeste(
+        rolagem=rolagem,
+        atributo=valor_atributo,
+        total=total,
+        dificuldade=dificuldade,
+        sucesso=sucesso,
+        critico_sucesso=critico_sucesso,
+        critico_falha=critico_falha,
+    )
 
 
 def atributo_para_tipo(tipo_acao: str) -> str:

@@ -29,6 +29,14 @@
         .campanha-item:hover { background: #16213e; border: 1px solid #e94560; }
         .link-toggle { color: #f4d35e; cursor: pointer; text-decoration: underline; font-size: 13px; display: inline-block; margin-top: 10px; }
         h1 { color: #e94560; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: #16213e; padding: 30px; border-radius: 10px; max-width: 90%; max-height: 90%; overflow-y: auto; border: 2px solid #e94560; }
+        .modal-content h3 { color: #f4d35e; margin-top: 0; }
+        .modal-content pre { background: #0f3460; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 12px; color: #ddd; white-space: pre-wrap; word-wrap: break-word; }
+        .modal-close { color: #e94560; cursor: pointer; font-size: 28px; font-weight: bold; position: absolute; top: 20px; right: 30px; }
+        .modal-close:hover { color: #f4d35e; }
+        .btn-ver-ficha { background: transparent; border: 1px solid #f4d35e; color: #f4d35e; font-size: 12px; padding: 6px 10px; cursor: pointer; margin-left: 10px; }
     </style>
 </head>
 <body>
@@ -59,7 +67,16 @@
         </div>
         <div class="status">
             <span class="status-text" id="status">Aguardando ação...</span>
+            <button class="btn-ver-ficha" id="btn-ficha" onclick="abrirFicha()" style="display:none;">📋 Ver Ficha</button>
             <button class="btn-nova-aventura" onclick="novaAventura()">Nova Aventura</button>
+        </div>
+    </div>
+
+    <div id="modal-ficha" class="modal" onclick="if(event.target===this) fecharFicha()">
+        <div class="modal-content">
+            <span class="modal-close" onclick="fecharFicha()">&times;</span>
+            <h3 id="modal-title">Ficha Completa do Personagem</h3>
+            <pre id="modal-ficha-content"></pre>
         </div>
     </div>
 
@@ -103,18 +120,42 @@
             document.getElementById('status').innerHTML =
                 `${estado.estado.local} - ${estado.estado.hora} | turno ${estado.turno}`;
 
+            // Mostrar/esconder botão de ver ficha
+            const btnFicha = document.getElementById('btn-ficha');
+            if (estado.jogador.ficha_completa && estado.jogador.ficha_completa.trim().length > 0) {
+                btnFicha.style.display = 'inline-block';
+                // Guardar ficha no objeto global para usar no modal
+                window.fichaAtual = estado.jogador.ficha_completa;
+            } else {
+                btnFicha.style.display = 'none';
+            }
+
             const chat = document.getElementById('chat');
             if (mensagemBemVindo) {
                 chat.innerHTML = '<div class="msg-ia">Bem-vindo a Alderan, viajante. O que você deseja fazer?</div>';
                 const tamanhoFicha = (estado.jogador.ficha_completa || '').length;
                 if (tamanhoFicha > 0) {
-                    chat.innerHTML += `<div class="msg-confirmacao">✓ Ficha completa salva (${tamanhoFicha} caracteres). Ela vai junto em toda narração.</div>`;
+                    chat.innerHTML += `<div class="msg-confirmacao">✓ Ficha completa salva (${tamanhoFicha} caracteres). Clique em "Ver Ficha" para visualizar. Ela vai junto em toda narração.</div>`;
                 } else {
                     chat.innerHTML += `<div class="msg-confirmacao" style="color:#f4d35e;border-left-color:#f4d35e;">Nenhuma ficha completa foi enviada — só nome/aparência/histórico curto serão usados.</div>`;
                 }
             } else {
-                chat.innerHTML = `<div class="msg-ia">Campanha retomada. Você está em ${estado.estado.local}.</div>`;
+                const cena = estado.ultima_narracao
+                    ? formatarNarracao(estado.ultima_narracao)
+                    : escapeHtml(`Campanha retomada. Você está em ${estado.estado.local}.`);
+                chat.innerHTML = `<div class="msg-ia">${cena}</div>`;
             }
+        }
+
+        function abrirFicha() {
+            if (window.fichaAtual) {
+                document.getElementById('modal-ficha-content').textContent = window.fichaAtual;
+                document.getElementById('modal-ficha').classList.add('active');
+            }
+        }
+
+        function fecharFicha() {
+            document.getElementById('modal-ficha').classList.remove('active');
         }
 
         function novaAventura() {
