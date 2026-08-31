@@ -99,30 +99,8 @@
         <div class="status">
             <span class="status-text" id="status">Aguardando ação...</span>
             <button class="btn-ver-ficha" id="btn-ficha" onclick="abrirFicha()" style="display:none;">📋 Ver Ficha</button>
-            <button class="btn-catalogo" onclick="abrirCatalogo()">✦ Catálogo</button>
+            <a class="btn-catalogo" id="link-catalogo" href="/" style="display:none;">✦ Catálogo</a>
             <button class="btn-nova-aventura" onclick="novaAventura()">Nova Aventura</button>
-        </div>
-    </div>
-
-    <div id="modal-catalogo" class="modal" onclick="if(event.target===this) fecharCatalogo()">
-        <div class="modal-content" style="width:900px;">
-            <span class="modal-close" onclick="fecharCatalogo()">&times;</span>
-            <h3>Catálogo do mundo</h3>
-            <p style="font-size:13px;color:#b8b8d1;">Fichas canônicas são persistentes e só entram na narração quando se tornam relevantes.</p>
-            <div class="catalogo-grid" id="catalogo-lista"></div>
-            <hr style="border-color:#345;">
-            <h3 id="catalogo-form-titulo">Nova ficha</h3>
-            <div class="catalogo-form">
-                <select id="ficha-tipo"><option value="personagem">Personagem</option><option value="local">Local</option><option value="raca">Raça</option><option value="item">Item</option><option value="organizacao">Organização</option><option value="evento">Evento</option><option value="criatura">Criatura</option><option value="divindade">Divindade</option><option value="conceito">Conceito</option></select>
-                <input id="ficha-titulo" placeholder="Título da ficha">
-                <textarea id="ficha-resumo" placeholder="Resumo breve"></textarea>
-                <textarea id="ficha-conteudo" placeholder="Conteúdo livre / Markdown"></textarea>
-                <textarea id="ficha-campos" placeholder='Campos estruturados em JSON, ex.: {"região":"Norte", "perigo":3}'></textarea>
-                <input id="ficha-imagem" placeholder="URL da imagem (opcional)">
-                <input id="ficha-tags" placeholder="Tags separadas por vírgula">
-                <button onclick="salvarFicha()">Salvar ficha</button>
-                <button class="btn-nova-aventura" id="cancelar-edicao" onclick="limparFormularioFicha()" style="display:none;">Cancelar edição</button>
-            </div>
         </div>
     </div>
 
@@ -142,7 +120,6 @@
         // guardamos QUAL campanha retomar.
         const CHAVE_STORAGE = 'mestre_campanha_id';
         let campanhaId = localStorage.getItem(CHAVE_STORAGE);
-        let fichaEditando = null;
 
         function pontosD10() {
             return ['fisico', 'social', 'mental'].map(categoria =>
@@ -190,6 +167,9 @@
             document.getElementById('chat-area').style.display = 'block';
             document.getElementById('status').innerHTML =
                 `${estado.estado.local} - ${estado.estado.hora} | turno ${estado.turno}`;
+            const linkCatalogo = document.getElementById('link-catalogo');
+            linkCatalogo.href = `/campanhas/${encodeURIComponent(estado.campanha_id)}/wiki`;
+            linkCatalogo.style.display = 'inline-block';
 
             // Mostrar/esconder botão de ver ficha
             const btnFicha = document.getElementById('btn-ficha');
@@ -227,80 +207,6 @@
 
         function fecharFicha() {
             document.getElementById('modal-ficha').classList.remove('active');
-        }
-
-        async function abrirCatalogo() {
-            document.getElementById('modal-catalogo').classList.add('active');
-            await carregarCatalogo();
-        }
-
-        function fecharCatalogo() { document.getElementById('modal-catalogo').classList.remove('active'); }
-
-        async function carregarCatalogo() {
-            const lista = document.getElementById('catalogo-lista');
-            lista.innerHTML = 'Carregando fichas...';
-            try {
-                const resp = await fetch(`/campanhas/${campanhaId}/catalogo`);
-                const fichas = await resp.json();
-                lista.innerHTML = '';
-                if (!fichas.length) { lista.innerHTML = '<i>Nenhuma ficha criada ainda.</i>'; return; }
-                fichas.forEach(f => {
-                    const card = document.createElement('div');
-                    card.className = 'ficha-card';
-                    card.innerHTML = `<small>${escapeHtml(f.tipo)}</small><h4>${escapeHtml(f.titulo)}</h4><p>${escapeHtml(f.resumo || 'Sem resumo')}</p>`;
-                    const editar = document.createElement('button'); editar.textContent = 'Editar'; editar.onclick = () => preencherFormularioFicha(f);
-                    const apagar = document.createElement('button'); apagar.textContent = 'Apagar'; apagar.className = 'btn-nova-aventura'; apagar.onclick = () => apagarFicha(f.id, f.titulo);
-                    card.append(editar, apagar); lista.appendChild(card);
-                });
-            } catch (e) { lista.innerHTML = 'Erro ao carregar o catálogo: ' + escapeHtml(e.message); }
-        }
-
-        function preencherFormularioFicha(ficha) {
-            fichaEditando = ficha.id;
-            document.getElementById('catalogo-form-titulo').textContent = 'Editar ficha';
-            document.getElementById('ficha-tipo').value = ficha.tipo;
-            document.getElementById('ficha-titulo').value = ficha.titulo;
-            document.getElementById('ficha-resumo').value = ficha.resumo || '';
-            document.getElementById('ficha-conteudo').value = ficha.conteudo || '';
-            document.getElementById('ficha-campos').value = JSON.stringify(ficha.campos || {}, null, 2);
-            document.getElementById('ficha-imagem').value = ficha.imagem || '';
-            document.getElementById('ficha-tags').value = (ficha.tags || []).join(', ');
-            document.getElementById('cancelar-edicao').style.display = 'inline-block';
-        }
-
-        function limparFormularioFicha() {
-            fichaEditando = null;
-            document.getElementById('catalogo-form-titulo').textContent = 'Nova ficha';
-            ['ficha-titulo','ficha-resumo','ficha-conteudo','ficha-campos','ficha-imagem','ficha-tags'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('ficha-tipo').value = 'personagem';
-            document.getElementById('cancelar-edicao').style.display = 'none';
-        }
-
-        async function salvarFicha() {
-            let campos = {};
-            try { campos = JSON.parse(document.getElementById('ficha-campos').value || '{}'); }
-            catch (_) { alert('Os campos estruturados precisam ser um JSON válido.'); return; }
-            const dados = {
-                tipo: document.getElementById('ficha-tipo').value,
-                titulo: document.getElementById('ficha-titulo').value.trim(),
-                resumo: document.getElementById('ficha-resumo').value.trim(),
-                conteudo: document.getElementById('ficha-conteudo').value.trim(), campos,
-                imagem: document.getElementById('ficha-imagem').value.trim(),
-                tags: document.getElementById('ficha-tags').value.split(',').map(t => t.trim()).filter(Boolean)
-            };
-            if (!dados.titulo) { alert('Dê um título à ficha.'); return; }
-            const url = fichaEditando ? `/campanhas/${campanhaId}/catalogo/${fichaEditando}` : `/campanhas/${campanhaId}/catalogo`;
-            const resp = await fetch(url, {method: fichaEditando ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dados)});
-            if (!resp.ok) { const erro = await resp.json(); alert(erro.detail || 'Não foi possível salvar a ficha.'); return; }
-            limparFormularioFicha(); await carregarCatalogo();
-        }
-
-        async function apagarFicha(id, titulo) {
-            if (!confirm(`Apagar a ficha “${titulo}”? Esta ação não pode ser desfeita.`)) return;
-            const resp = await fetch(`/campanhas/${campanhaId}/catalogo/${id}`, {method: 'DELETE'});
-            if (!resp.ok) { alert('Não foi possível apagar a ficha.'); return; }
-            if (fichaEditando === id) limparFormularioFicha();
-            await carregarCatalogo();
         }
 
         function novaAventura() {
@@ -423,6 +329,12 @@
             localStorage.setItem(CHAVE_STORAGE, campanhaId);
 
             mostrarAreaDeChat(estado, true);
+        }
+
+        const campanhaDaUrl = new URLSearchParams(window.location.search).get('campanha_id');
+        if (campanhaDaUrl) {
+            campanhaId = campanhaDaUrl;
+            localStorage.setItem(CHAVE_STORAGE, campanhaId);
         }
 
         atualizarOpcoesD10();

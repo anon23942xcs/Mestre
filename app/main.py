@@ -16,7 +16,7 @@ from app.routers import campanha, wiki
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
-app = FastAPI(title="Mestre", version="0.5.0")
+app = FastAPI(title="Mestre", version="0.6.0")
 
 app.include_router(campanha.router)
 app.include_router(wiki.router)
@@ -27,7 +27,22 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/")
 async def raiz():
+    return FileResponse(STATIC_DIR / "home.html")
+
+
+@app.get("/jogo")
+async def jogo():
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/campanhas/{campanha_id}/wiki")
+async def pagina_wiki(campanha_id: str):
+    return FileResponse(STATIC_DIR / "wiki.html")
+
+
+@app.get("/campanhas/{campanha_id}/wiki/{ficha_id}")
+async def pagina_ficha(campanha_id: str, ficha_id: str):
+    return FileResponse(STATIC_DIR / "ficha.html")
 
 
 @app.get("/saude")

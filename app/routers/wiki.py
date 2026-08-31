@@ -19,6 +19,15 @@ async def listar_fichas(campanha_id: str):
     return ficha_repositorio.listar(campanha_id)
 
 
+@router.get("/{ficha_id}", response_model=FichaMundo)
+async def obter_ficha(campanha_id: str, ficha_id: str):
+    _exigir_campanha(campanha_id)
+    ficha = ficha_repositorio.carregar(campanha_id, ficha_id)
+    if not ficha:
+        raise HTTPException(status_code=404, detail="Ficha não encontrada")
+    return ficha
+
+
 @router.post("", response_model=FichaMundo, status_code=201)
 async def criar_ficha(campanha_id: str, dados: FichaMundoRequest):
     _exigir_campanha(campanha_id)

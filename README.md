@@ -1,9 +1,9 @@
-# Mestre 0.5.0 - motor de RPG com IA
+# Mestre 0.6.0 - motor de RPG com IA
 
 ## Versão atual
 
-**0.5.0** — Adiciona o plugin `d10`: pools opostos, limiar de sucesso por
-campanha e empate a favor da oposição. O pipeline e o d20 permanecem intactos.
+**0.6.0** — Adiciona uma home de campanhas, páginas próprias da Wiki e de cada
+ficha, com URLs que podem ser abertas em outra aba.
 
 O projeto usa versionamento semântico: `MAIOR.MENOR.CORREÇÃO`. Recursos novos
 compatíveis elevam a versão menor; correções elevam a versão de correção;
@@ -30,13 +30,16 @@ login, banco, pagamento nem Modo Janitor.
 
 O que já funciona de ponta a ponta:
 
-- criar/retomar/apagar campanhas (`data/{id}.json`)
+- criar, retomar e apagar campanhas (`data/{id}.json`)
+- home em galeria de campanhas, com links reais para jogar ou abrir o mundo
+  de cada campanha em outra aba
 - turno: Intérprete → dados (se preciso) → Gerente (patch de estado) → Narrador
 - compilação de memórias a cada N turnos
 - o servidor é a fonte de verdade (o cliente não reenvia PV/inventário)
 - catálogo canônico editável de personagens, locais, raças, itens e mais;
   cada ficha é persistida separadamente, com texto, atributos, imagem, tags
-  e relações por ID com outras fichas
+  e relações por ID com outras fichas, além de páginas próprias para listar e
+  consultar cada ficha
 - o mesmo patch do Gerente pode atualizar fichas e relações da Wiki sem criar
   uma chamada adicional à IA por turno
 - NPCs presentes e ausentes: quem deixa a cena permanece salvo, com sua
@@ -50,10 +53,20 @@ O que já funciona de ponta a ponta:
 - sistemas de regras plugáveis, com contrato genérico de resultado; hoje há os
   plugins `d20` (padrão), `d10` (pool oposto) e `nenhum` (narrativa pura)
 
-## Fichas e presença
+## Fichas, Wiki e presença
 
-O botão **Catálogo** dentro de uma campanha cria e edita as fichas manuais do
-mundo. Elas são a fonte de verdade separada do estado dinâmico da partida.
+A home em `/` lista as campanhas em cartões. `/jogo` mantém a interface da
+partida e aceita `?campanha_id={id}` para abrir uma campanha específica. A Wiki
+de uma campanha fica em `/campanhas/{id}/wiki`: ela separa as nove categorias
+de ficha e permite criar fichas. Cada cartão leva, por um link real, à página
+da ficha em `/campanhas/{id}/wiki/{ficha_id}`, onde é possível consultar e
+editar seu conteúdo. Links para relações levam às fichas relacionadas.
+
+As fichas manuais do mundo continuam sendo a fonte de verdade separada do
+estado dinâmico da partida. A API expõe o catálogo completo em
+`GET /campanhas/{id}/catalogo` e uma ficha em
+`GET /campanhas/{id}/catalogo/{ficha_id}`; criação, edição e remoção continuam
+em `POST`, `PUT` e `DELETE` no mesmo recurso.
 
 As operações de presença também estão disponíveis pela API:
 
@@ -110,7 +123,7 @@ persistentes; uma relação removida nunca apaga a ficha de destino.
 ```
 app/
   config.py              .env, modelo Gemini, limites de memória
-  main.py                FastAPI, / e /saude
+  main.py                FastAPI, páginas estáticas e /saude
   models/                estado, ficha da Wiki, payloads e resultado de teste
   prompts/               system prompt + preencher() seguro
   services/
@@ -127,7 +140,11 @@ app/
     wiki_gerente.py      aplicação defensiva de patch da Wiki
   storage/               campanha e fichas da Wiki em JSON atômico
   routers/               campanhas e Wiki HTTP
-  static/index.html      interface de teste
+  static/
+    home.html            galeria de campanhas (/)
+    index.html           tela do jogo (/jogo)
+    wiki.html            painel da Wiki por campanha
+    ficha.html           detalhe e edição de uma ficha da Wiki
 data/                    um .json por campanha (gitignorado)
 tests/                   dados, patch, persistência, prompts (sem Gemini)
 ```
@@ -143,7 +160,8 @@ tests/                   dados, patch, persistência, prompts (sem Gemini)
 
 ## O que ainda não está resolvido
 
-- **Autenticação.** Quem tem o `campanha_id` acessa a campanha.
+- **Autenticação.** Quem tem o `campanha_id` acessa a campanha, sua Wiki e suas
+  fichas.
 - **Banco de dados.** JSON em disco não escala nem lista campanhas por usuário.
 - **Rate limiting** das 50 mensagens/dia do Modo Janitor.
 - **Modo Janitor.** Não implementado.
