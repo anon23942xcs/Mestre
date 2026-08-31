@@ -16,7 +16,7 @@ from app.routers import campanha, wiki
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
-app = FastAPI(title="Mestre", version="2.1")
+app = FastAPI(title="Mestre", version="2.2.0")
 
 app.include_router(campanha.router)
 app.include_router(wiki.router)

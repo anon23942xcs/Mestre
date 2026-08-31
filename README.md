@@ -1,4 +1,15 @@
-# Mestre - motor de RPG com IA
+# Mestre 0.2.2 - motor de RPG com IA
+
+## Versão atual
+
+**0.2.2** — Wiki canônica com relações por ID e atualização via patch do
+Gerente; fichas extensas de jogador organizadas localmente por Markdown; e
+configuração de mundo com cenário, personalidade, primeira mensagem e diálogos
+de exemplo.
+
+O projeto usa versionamento semântico: `MAIOR.MENOR.CORREÇÃO`. Recursos novos
+compatíveis elevam a versão menor; correções elevam a versão de correção;
+mudanças incompatíveis elevam a maior.
 
 ## Como rodar
 
