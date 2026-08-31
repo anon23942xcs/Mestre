@@ -126,7 +126,13 @@ def aplicar_patch(estado: EstadoCompleto, patch: dict) -> None:
     npc_novo = patch.get("npc_novo")
     if isinstance(npc_novo, dict) and npc_novo.get("id") not in npcs_por_id:
         try:
-            estado.estado.npc_ativos.append(NPC(**npc_novo))
+            novo_npc = NPC(**npc_novo)
+            if getattr(estado.configuracao_mundo, "sistema_id", "") == "d10":
+                from app.systems.sistema_d10 import construir_ficha
+                novo_npc.ficha_sistema = construir_ficha(
+                    getattr(estado.configuracao_mundo, "d10_pontos_atributos", [4, 3, 2]), {}
+                )
+            estado.estado.npc_ativos.append(novo_npc)
         except Exception:
             pass  # patch malformado para o novo NPC, ignora em vez de travar
 

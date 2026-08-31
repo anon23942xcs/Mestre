@@ -1,6 +1,7 @@
 from app.models.estado import Jogador
 from app.services.estado_inicial import criar_estado_inicial
 from app.systems.registro import obter_sistema
+from app.systems.sistema_d10 import TIPO_ACAO_PARA_CATEGORIA, construir_ficha
 
 
 def test_registro_obtem_d20_e_fallback_seguro():
@@ -83,3 +84,42 @@ def test_d10_limiar_configuravel_muda_contagem(monkeypatch):
     assert facil.detalhes["sucessos_jogador"] == 2
     assert dificil.detalhes["sucessos_jogador"] == 0
     assert facil.sucesso is True and dificil.sucesso is False
+
+
+def test_d10_pool_usa_atributo_da_categoria(monkeypatch):
+    from app.services import dados
+    estado = _estado_d10()
+    estado.jogador.ficha_sistema = {"atributos": {"fisico": 4, "social": 3, "mental": 2}}
+    tamanhos = []
+    monkeypatch.setattr(dados, "rolar_pool", lambda tamanho: tamanhos.append(tamanho) or [10] * tamanho)
+    obter_sistema("d10").resolver(estado, {"tipo_acao": "combate", "dificuldade_sugerida": 8})
+    assert tamanhos[0] == 4
+
+
+def test_d10_mapa_de_acoes_para_categorias():
+    assert TIPO_ACAO_PARA_CATEGORIA == {
+        "combate": "fisico", "exploracao": "fisico", "social": "social", "outro": "mental"
+    }
+
+
+def test_d10_orcamento_e_escolha_alteram_a_ficha():
+    assert construir_ficha([5, 4, 3], {"fisico": 5, "social": 4, "mental": 3}) != construir_ficha(
+        [4, 3, 2], {"fisico": 4, "social": 3, "mental": 2}
+    )
+
+
+def test_d10_escolha_invalida_volta_para_ordem_padrao():
+    assert construir_ficha([5, 4, 3], {"fisico": 5, "social": 5, "mental": 3}) == {
+        "atributos": {"fisico": 5, "social": 4, "mental": 3}
+    }
+
+
+def test_d10_ficha_antiga_ou_sem_atributos_usa_pool_padrao(monkeypatch):
+    from app.services import dados
+    estado = _estado_d10()
+    tamanhos = []
+    monkeypatch.setattr(dados, "rolar_pool", lambda tamanho: tamanhos.append(tamanho) or [10] * tamanho)
+    obter_sistema("d10").resolver(estado, {"tipo_acao": "social", "dificuldade_sugerida": 8})
+    estado.jogador.ficha_sistema = {}
+    obter_sistema("d10").resolver(estado, {"tipo_acao": "social", "dificuldade_sugerida": 8})
+    assert tamanhos[::2] == [2, 2]

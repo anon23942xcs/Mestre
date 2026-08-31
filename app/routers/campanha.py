@@ -25,6 +25,7 @@ from app.services.estado_inicial import criar_estado_inicial
 from app.services.fichas_jogador import organizar_ficha_markdown
 from app.services.ia_client import ErroIA
 from app.storage import repositorio
+from app.systems.sistema_d10 import construir_ficha
 
 router = APIRouter(prefix="/campanhas", tags=["campanhas"])
 
@@ -47,11 +48,16 @@ async def criar_campanha(dados: CriarPersonagemRequest):
             historico=dados.historico.strip(),
             ficha_completa=dados.ficha_completa.strip(),
             ficha_estruturada=organizar_ficha_markdown(dados.ficha_completa),
+            ficha_sistema=(
+                construir_ficha(dados.d10_pontos_atributos, dados.d10_atributos_jogador)
+                if dados.sistema_rpg and dados.sistema_id.strip() == "d10" else {}
+            ),
         ),
         ConfiguracaoMundo(
             sistema_rpg=dados.sistema_rpg,
             sistema_id=dados.sistema_id.strip() if dados.sistema_rpg else "nenhum",
             d10_limiar_sucesso=dados.d10_limiar_sucesso,
+            d10_pontos_atributos=dados.d10_pontos_atributos,
             cenario=dados.cenario.strip() or ConfiguracaoMundo().cenario,
             personalidade=dados.personalidade_mestre.strip() or ConfiguracaoMundo().personalidade,
             primeira_mensagem=dados.primeira_mensagem.strip() or ConfiguracaoMundo().primeira_mensagem,

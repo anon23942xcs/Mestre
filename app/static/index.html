@@ -79,6 +79,10 @@
                 <select id="sistema_id"><option value="d20">d20 clássico</option><option value="d10">d10 (pool oposto)</option><option value="nenhum">Narrativa pura</option></select>
                 <label for="d10_limiar_sucesso">d10: limiar de sucesso</label>
                 <select id="d10_limiar_sucesso"><option value="5">5 — fácil</option><option value="6" selected>6 — normal</option><option value="7">7 — difícil</option><option value="8">8 — muito difícil</option></select>
+                <label>d10: orçamento de atributos (físico, social, mental)</label>
+                <div class="form-row"><input type="number" id="d10_pontos_fisico" value="4" min="1" max="20" onchange="atualizarOpcoesD10()"><input type="number" id="d10_pontos_social" value="3" min="1" max="20" onchange="atualizarOpcoesD10()"><input type="number" id="d10_pontos_mental" value="2" min="1" max="20" onchange="atualizarOpcoesD10()"></div>
+                <label>d10: distribuir atributos do personagem</label>
+                <div class="form-row"><select id="d10_atributo_fisico"></select><select id="d10_atributo_social"></select><select id="d10_atributo_mental"></select></div>
             </details>
             <button onclick="criarPersonagem()" style="width:100%;">Iniciar Aventura</button>
         </div>
@@ -139,6 +143,22 @@
         const CHAVE_STORAGE = 'mestre_campanha_id';
         let campanhaId = localStorage.getItem(CHAVE_STORAGE);
         let fichaEditando = null;
+
+        function pontosD10() {
+            return ['fisico', 'social', 'mental'].map(categoria =>
+                parseInt(document.getElementById(`d10_pontos_${categoria}`).value) || 0
+            );
+        }
+
+        function atualizarOpcoesD10() {
+            const pontos = pontosD10();
+            ['fisico', 'social', 'mental'].forEach((categoria, indice) => {
+                const select = document.getElementById(`d10_atributo_${categoria}`);
+                const anterior = select.value;
+                select.innerHTML = pontos.map(ponto => `<option value="${ponto}">${ponto}</option>`).join('');
+                select.value = pontos.includes(Number(anterior)) ? anterior : String(pontos[indice]);
+            });
+        }
 
         // Ao carregar a página, tenta retomar a campanha salva.
         window.addEventListener('DOMContentLoaded', async () => {
@@ -302,6 +322,10 @@
             document.getElementById('sistema_rpg').checked = true;
             document.getElementById('sistema_id').value = 'd20';
             document.getElementById('d10_limiar_sucesso').value = '6';
+            document.getElementById('d10_pontos_fisico').value = '4';
+            document.getElementById('d10_pontos_social').value = '3';
+            document.getElementById('d10_pontos_mental').value = '2';
+            atualizarOpcoesD10();
         }
 
         function escapeHtml(str) {
@@ -373,7 +397,14 @@
                 dialogos_exemplo: document.getElementById('dialogos_exemplo').value || '',
                 sistema_rpg: document.getElementById('sistema_rpg').checked,
                 sistema_id: document.getElementById('sistema_id').value,
-                d10_limiar_sucesso: parseInt(document.getElementById('d10_limiar_sucesso').value)
+                d10_limiar_sucesso: parseInt(document.getElementById('d10_limiar_sucesso').value),
+                d10_pontos_atributos: pontosD10(),
+                d10_atributos_jogador: {
+                    fisico: parseInt(document.getElementById('d10_atributo_fisico').value),
+                    social: parseInt(document.getElementById('d10_atributo_social').value),
+                    mental: parseInt(document.getElementById('d10_atributo_mental').value
+                    )
+                }
             };
 
             const resp = await fetch('/campanhas', {
@@ -393,6 +424,8 @@
 
             mostrarAreaDeChat(estado, true);
         }
+
+        atualizarOpcoesD10();
 
         async function enviarMensagem() {
             const input = document.getElementById('mensagem');

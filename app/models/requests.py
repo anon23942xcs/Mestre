@@ -9,7 +9,7 @@ direto no JavaScript do navegador antes de reenviar.
 """
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.models.estado import EstadoCompleto
 from app.models.ficha import TipoFicha
@@ -35,6 +35,27 @@ class CriarPersonagemRequest(BaseModel):
     sistema_rpg: bool = True
     sistema_id: str = Field(default="d20", max_length=40)
     d10_limiar_sucesso: int = Field(default=6, ge=2, le=10)
+    d10_pontos_atributos: list[int] = Field(default_factory=lambda: [4, 3, 2])
+    d10_atributos_jogador: dict = Field(default_factory=dict)
+
+    @field_validator("d10_pontos_atributos", mode="before")
+    @classmethod
+    def pontos_d10_seguros(cls, valor):
+        """Campos de formulário ruins nunca impedem a criação da campanha."""
+        if not isinstance(valor, list) or len(valor) != 3:
+            return [4, 3, 2]
+        if any(isinstance(item, bool) for item in valor):
+            return [4, 3, 2]
+        try:
+            pontos = [int(item) for item in valor]
+        except (TypeError, ValueError):
+            return [4, 3, 2]
+        return pontos if all(1 <= ponto <= 20 for ponto in pontos) else [4, 3, 2]
+
+    @field_validator("d10_atributos_jogador", mode="before")
+    @classmethod
+    def atributos_d10_seguros(cls, valor):
+        return valor if isinstance(valor, dict) else {}
 
 
 class AcaoRequest(BaseModel):

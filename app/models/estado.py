@@ -55,6 +55,9 @@ class NPC(BaseModel):
     local_ausente: str = ""
     ficha_catalogo_id: Optional[str] = None
     memoria_relacao: str = ""
+    # Espaço reservado para regras específicas do sistema ativo. Mantido
+    # opcional para campanhas já salvas antes da existência das fichas de NPC.
+    ficha_sistema: Dict[str, object] = Field(default_factory=dict)
 
 
 
@@ -84,6 +87,7 @@ class ConfiguracaoMundo(BaseModel):
     sistema_rpg: bool = True
     sistema_id: str = "d20"
     d10_limiar_sucesso: int = 6
+    d10_pontos_atributos: List[int] = Field(default_factory=lambda: [4, 3, 2])
     cenario: str = "Uma aventura de fantasia medieval no reino de Valdris."
     personalidade: str = "Um Mestre imparcial, descritivo e atento às escolhas do jogador."
     primeira_mensagem: str = "Bem-vindo a Alderan, viajante. O que você deseja fazer?"
