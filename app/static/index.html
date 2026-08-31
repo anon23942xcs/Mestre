@@ -14,10 +14,20 @@
         input { flex: 1; background: #0f3460; color: white; }
         button { background: #e94560; color: white; cursor: pointer; margin-left: 10px; }
         .form-row { display: flex; }
-        .status { margin-top: 10px; padding: 10px; background: #0f3460; border-radius: 5px; font-size: 12px; }
+        .status { margin-top: 10px; padding: 10px; background: #0f3460; border-radius: 5px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .status-text { flex: 1; }
+        .btn-nova-aventura { background: transparent; border: 1px solid #e94560; color: #e94560; font-size: 12px; padding: 6px 10px; margin-left: 10px; }
         .login-form { background: #16213e; padding: 20px; border-radius: 10px; }
         .login-form input, .login-form textarea { width: 100%; margin-bottom: 5px; background: #0f3460; color: white; border: 1px solid #1a1a2e; }
         .login-form textarea { height: 60px; }
+        .login-form textarea#ficha_completa { height: 220px; font-family: monospace; font-size: 13px; }
+        .login-form label { display: block; font-size: 12px; color: #aaa; margin: 10px 0 3px; }
+        .msg-ia em { font-style: italic; color: #b8b8d1; }
+        .msg-confirmacao { background: #16213e; padding: 10px; margin: 5px 0; border-radius: 5px; font-size: 12px; color: #8fd694; border-left: 3px solid #8fd694; }
+        .lista-campanhas { margin-top: 15px; }
+        .campanha-item { background: #0f3460; padding: 10px; margin: 5px 0; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; font-size: 13px; }
+        .campanha-item:hover { background: #16213e; border: 1px solid #e94560; }
+        .link-toggle { color: #f4d35e; cursor: pointer; text-decoration: underline; font-size: 13px; display: inline-block; margin-top: 10px; }
         h1 { color: #e94560; }
     </style>
 </head>
@@ -32,9 +42,13 @@
             <input type="number" id="idade" placeholder="Idade">
             <input type="text" id="genero" placeholder="Gênero">
             <input type="text" id="aparencia" placeholder="Aparência">
-            <textarea id="historico" placeholder="Histórico do personagem"></textarea>
+            <textarea id="historico" placeholder="Histórico do personagem (resumo curto, opcional se preencher a ficha completa abaixo)"></textarea>
+            <label for="ficha_completa">Ficha completa do personagem (opcional — cole aqui a ficha inteira, com habilidades, regras próprias, lore etc. Isso vai junto em toda narração, o personagem não é esquecido depois da criação.)</label>
+            <textarea id="ficha_completa" placeholder="Cole aqui a ficha completa do personagem, se tiver uma..."></textarea>
             <button onclick="criarPersonagem()" style="width:100%;">Iniciar Aventura</button>
         </div>
+        <span class="link-toggle" onclick="alternarListaCampanhas()">Ver campanhas salvas</span>
+        <div class="lista-campanhas" id="lista-campanhas" style="display:none;"></div>
     </div>
 
     <div id="chat-area" style="display:none;">
@@ -43,15 +57,137 @@
             <input type="text" id="mensagem" placeholder="O que você faz?" onkeypress="if(event.key==='Enter') enviarMensagem()">
             <button onclick="enviarMensagem()">Enviar</button>
         </div>
-        <div class="status" id="status">Aguardando ação...</div>
+        <div class="status">
+            <span class="status-text" id="status">Aguardando ação...</span>
+            <button class="btn-nova-aventura" onclick="novaAventura()">Nova Aventura</button>
+        </div>
     </div>
 
     <script>
-        // Diferença chave em relação à versão anterior: o front-end guarda
-        // só o campanhaId, não o estado inteiro. O servidor é quem mantém
-        // e valida o estado, o navegador não consegue mais adulterar
-        // pv/atributos/inventário editando uma variável local.
-        let campanhaId = null;
+        // Diferença chave em relação à versão anterior: o campanhaId agora é
+        // persistido em localStorage, então recarregar a página (F5, fechar
+        // e reabrir o navegador) não força a criação de um personagem novo.
+        // O servidor continua sendo a fonte de verdade do estado — aqui só
+        // guardamos QUAL campanha retomar.
+        const CHAVE_STORAGE = 'mestre_campanha_id';
+        let campanhaId = localStorage.getItem(CHAVE_STORAGE);
+
+        // Ao carregar a página, tenta retomar a campanha salva.
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (!campanhaId) return;
+
+            try {
+                const resp = await fetch(`/campanhas/${campanhaId}`);
+                if (!resp.ok) {
+                    // Campanha não existe mais no servidor (ex: apagada, ou
+                    // rodando contra um banco de dados diferente). Limpa o
+                    // storage e deixa cair na tela de criação normalmente.
+                    localStorage.removeItem(CHAVE_STORAGE);
+                    campanhaId = null;
+                    return;
+                }
+                const estado = await resp.json();
+                mostrarAreaDeChat(estado, false);
+            } catch (e) {
+                // Servidor fora do ar ou erro de rede: não apaga o
+                // localStorage, só deixa a tela de criação aparecer, já que
+                // a campanha pode continuar existindo quando o servidor
+                // voltar.
+                console.warn('Não foi possível retomar a campanha automaticamente:', e);
+            }
+        });
+
+        function mostrarAreaDeChat(estado, mensagemBemVindo) {
+            document.getElementById('personagem-area').style.display = 'none';
+            document.getElementById('chat-area').style.display = 'block';
+            document.getElementById('status').innerHTML =
+                `${estado.estado.local} - ${estado.estado.hora} | turno ${estado.turno}`;
+
+            const chat = document.getElementById('chat');
+            if (mensagemBemVindo) {
+                chat.innerHTML = '<div class="msg-ia">Bem-vindo a Alderan, viajante. O que você deseja fazer?</div>';
+                const tamanhoFicha = (estado.jogador.ficha_completa || '').length;
+                if (tamanhoFicha > 0) {
+                    chat.innerHTML += `<div class="msg-confirmacao">✓ Ficha completa salva (${tamanhoFicha} caracteres). Ela vai junto em toda narração.</div>`;
+                } else {
+                    chat.innerHTML += `<div class="msg-confirmacao" style="color:#f4d35e;border-left-color:#f4d35e;">Nenhuma ficha completa foi enviada — só nome/aparência/histórico curto serão usados.</div>`;
+                }
+            } else {
+                chat.innerHTML = `<div class="msg-ia">Campanha retomada. Você está em ${estado.estado.local}.</div>`;
+            }
+        }
+
+        function novaAventura() {
+            if (!confirm('Isso vai abandonar a campanha atual (ela continua salva no servidor, mas você vai criar um personagem novo). Continuar?')) {
+                return;
+            }
+            localStorage.removeItem(CHAVE_STORAGE);
+            campanhaId = null;
+            document.getElementById('chat-area').style.display = 'none';
+            document.getElementById('personagem-area').style.display = 'block';
+            document.getElementById('chat').innerHTML = '';
+            document.getElementById('nome').value = '';
+            document.getElementById('idade').value = '';
+            document.getElementById('genero').value = '';
+            document.getElementById('aparencia').value = '';
+            document.getElementById('historico').value = '';
+            document.getElementById('ficha_completa').value = '';
+        }
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        // Converte *texto* em <em>texto</em> DEPOIS de escapar o HTML, pra
+        // renderizar de verdade as ações em itálico em vez de mostrar os
+        // asteriscos crus, sem abrir brecha pra HTML/script injetado pela
+        // IA ou pelo jogador.
+        function formatarNarracao(texto) {
+            return escapeHtml(texto).replace(/\*(.+?)\*/g, '<em>$1</em>');
+        }
+
+        async function alternarListaCampanhas() {
+            const div = document.getElementById('lista-campanhas');
+            if (div.style.display === 'block') {
+                div.style.display = 'none';
+                return;
+            }
+            div.style.display = 'block';
+            div.innerHTML = 'Carregando...';
+            try {
+                const resp = await fetch('/campanhas');
+                const campanhas = await resp.json();
+                if (!campanhas.length) {
+                    div.innerHTML = '<i>Nenhuma campanha salva ainda.</i>';
+                    return;
+                }
+                div.innerHTML = '';
+                campanhas.forEach(c => {
+                    const item = document.createElement('div');
+                    item.className = 'campanha-item';
+                    item.innerHTML = `<span>${escapeHtml(c.nome_jogador)} — ${escapeHtml(c.local)} (turno ${c.turno})</span><span>retomar →</span>`;
+                    item.onclick = () => retomarCampanha(c.campanha_id);
+                    div.appendChild(item);
+                });
+            } catch (e) {
+                div.innerHTML = 'Erro ao carregar campanhas: ' + e.message;
+            }
+        }
+
+        async function retomarCampanha(id) {
+            const resp = await fetch(`/campanhas/${id}`);
+            if (!resp.ok) {
+                alert('Não foi possível carregar essa campanha.');
+                return;
+            }
+            const estado = await resp.json();
+            campanhaId = estado.campanha_id;
+            localStorage.setItem(CHAVE_STORAGE, campanhaId);
+            mostrarAreaDeChat(estado, false);
+        }
 
         async function criarPersonagem() {
             const dados = {
@@ -59,7 +195,8 @@
                 idade: parseInt(document.getElementById('idade').value) || 20,
                 genero: document.getElementById('genero').value || 'Indefinido',
                 aparencia: document.getElementById('aparencia').value || 'Viajante comum',
-                historico: document.getElementById('historico').value || 'Um viajante em busca de aventuras'
+                historico: document.getElementById('historico').value || 'Um viajante em busca de aventuras',
+                ficha_completa: document.getElementById('ficha_completa').value || ''
             };
 
             const resp = await fetch('/campanhas', {
@@ -75,13 +212,9 @@
 
             const estado = await resp.json();
             campanhaId = estado.campanha_id;
+            localStorage.setItem(CHAVE_STORAGE, campanhaId);
 
-            document.getElementById('personagem-area').style.display = 'none';
-            document.getElementById('chat-area').style.display = 'block';
-            document.getElementById('status').innerHTML = 'Personagem criado! Envie sua primeira ação. (campanha ' + campanhaId + ')';
-
-            const chat = document.getElementById('chat');
-            chat.innerHTML = '<div class="msg-ia">Bem-vindo a Alderan, viajante. O que você deseja fazer?</div>';
+            mostrarAreaDeChat(estado, true);
         }
 
         async function enviarMensagem() {
@@ -92,7 +225,7 @@
             input.value = '';
 
             const chat = document.getElementById('chat');
-            chat.innerHTML += `<div class="msg-user">${msg}</div>`;
+            chat.innerHTML += `<div class="msg-user">${escapeHtml(msg)}</div>`;
             chat.scrollTop = chat.scrollHeight;
 
             document.getElementById('status').innerHTML = 'O Mestre está pensando...';
@@ -118,7 +251,7 @@
                     chat.innerHTML += `<div class="msg-teste">Teste de dados: ${t.rolagem} + ${t.atributo} = ${t.total} vs CD ${t.dificuldade} (${status})</div>`;
                 }
 
-                chat.innerHTML += `<div class="msg-ia">${dados.resposta}</div>`;
+                chat.innerHTML += `<div class="msg-ia">${formatarNarracao(dados.resposta)}</div>`;
 
                 if (dados.erro) {
                     chat.innerHTML += `<div class="msg-erro">Aviso técnico: ${dados.erro}</div>`;

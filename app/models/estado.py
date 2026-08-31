@@ -25,6 +25,10 @@ class Jogador(BaseModel):
     genero: str
     aparencia: str
     historico: str
+    # Ficha de personagem completa e livre (habilidades, regras próprias,
+    # lore, etc.). Fica separada de "historico" porque pode ser bem mais
+    # longa; é injetada inteira no prompt do Narrador a cada turno.
+    ficha_completa: str = ""
     atributos: Atributos = Field(default_factory=Atributos)
     inventario: List[str] = Field(default_factory=lambda: ["roupas rasgadas"])
     pv: int = 20

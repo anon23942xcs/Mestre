@@ -22,6 +22,11 @@ from app.services.ia_client import ErroIA
 router = APIRouter(prefix="/campanhas", tags=["campanhas"])
 
 
+@router.get("")
+async def listar_campanhas():
+    return repositorio.listar()
+
+
 @router.post("", response_model=EstadoCompleto)
 async def criar_campanha(dados: CriarPersonagemRequest):
     campanha_id = repositorio.novo_id()
@@ -33,6 +38,7 @@ async def criar_campanha(dados: CriarPersonagemRequest):
             genero=dados.genero,
             aparencia=dados.aparencia,
             historico=dados.historico,
+            ficha_completa=dados.ficha_completa,
         ),
         estado=Estado(
             local="Taverna do Cão Caído - Alderan",

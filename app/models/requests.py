@@ -18,6 +18,12 @@ class CriarPersonagemRequest(BaseModel):
     genero: str
     aparencia: str
     historico: str
+    # Campo livre para colar uma ficha de personagem inteira (habilidades,
+    # regras próprias, histórico detalhado, etc.), diferente de "historico"
+    # que é pensado para um resumo curto. Vai inteiro para o prompt do
+    # Narrador em todo turno, então o personagem não "some" depois da
+    # criação.
+    ficha_completa: str = ""
 
 
 class AcaoRequest(BaseModel):

@@ -23,6 +23,11 @@ PROMPT = """[INSTRUÇÕES DO MESTRE]
 - Introduza conflitos quando a história estiver muito parada.
 - Limite a resposta a no máximo 4 parágrafos.
 - Seja descritivo, mostre emoções através de ações e diálogos, não apenas afirme.
+- FORMATAÇÃO OBRIGATÓRIA: toda ação, gesto ou descrição física fica entre asteriscos, e toda fala fica entre aspas. NUNCA coloque uma fala (texto entre aspas) dentro de asteriscos — são marcações separadas, nunca aninhadas. Exemplo de formato CORRETO:
+  *A estalajadeira cruza os braços, encarando você com desconfiança.* "A taverna só abre mais tarde," ela resmunga, batendo o pé no chão. *Ela força um sorriso amarelo.* "Mas se quiser esperar, sente-se ali."
+  Exemplo ERRADO (não faça isso): *"A taverna só abre mais tarde,"* ela resmunga.
+- Use SEMPRE essa mistura de asteriscos e aspas, nunca escreva a cena inteira em um único parágrafo de prosa corrida sem essas marcações.
+- Respeite a ficha completa do personagem abaixo (se houver): habilidades, limitações, regras próprias e tom descrito nela têm prioridade sobre suposições genéricas de RPG de fantasia.
 
 [ESTADO DO MUNDO]
 Mundo: {mundo}
@@ -31,6 +36,7 @@ Mundo: {mundo}
 Nome: {nome}
 Aparência: {aparencia}
 Histórico: {historico}
+Ficha completa do personagem: {ficha_completa}
 Inventário: {inventario}
 PV: {pv}/{pv_max}
 
@@ -84,6 +90,7 @@ def narrar(estado: EstadoCompleto, mensagem: str, resultado_teste: Optional[dict
         nome=estado.jogador.nome,
         aparencia=estado.jogador.aparencia,
         historico=estado.jogador.historico,
+        ficha_completa=estado.jogador.ficha_completa or "nenhuma ficha adicional além do histórico acima",
         inventario=", ".join(estado.jogador.inventario) or "nenhum",
         pv=estado.jogador.pv,
         pv_max=estado.jogador.pv_max,

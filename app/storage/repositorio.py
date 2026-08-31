@@ -59,3 +59,27 @@ def deletar(campanha_id: str) -> bool:
 
 def existe(campanha_id: str) -> bool:
     return _caminho(campanha_id).exists()
+
+
+def listar() -> list[dict]:
+    """
+    Lista um resumo de todas as campanhas salvas em disco, mais recente
+    primeiro. Usada para o jogador poder escolher qual campanha retomar,
+    em vez de só a última guardada no localStorage do navegador.
+    """
+    resumos = []
+    for caminho in DATA_DIR.glob("*.json"):
+        try:
+            with caminho.open("r", encoding="utf-8") as f:
+                dados = json.load(f)
+            resumos.append({
+                "campanha_id": dados.get("campanha_id", caminho.stem),
+                "nome_jogador": dados.get("jogador", {}).get("nome", "?"),
+                "local": dados.get("estado", {}).get("local", "?"),
+                "turno": dados.get("turno", 0),
+                "ultima_atualizacao": dados.get("ultima_atualizacao", ""),
+            })
+        except (json.JSONDecodeError, OSError):
+            continue  # arquivo corrompido ou ilegível, ignora em vez de quebrar a lista inteira
+    resumos.sort(key=lambda r: r["ultima_atualizacao"], reverse=True)
+    return resumos
