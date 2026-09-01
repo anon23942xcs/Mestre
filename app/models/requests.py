@@ -29,6 +29,7 @@ class PersonagemRequest(BaseModel):
     # Narrador em todo turno, então o personagem não "some" depois da
     # criação.
     ficha_completa: str = Field(default="", max_length=20000)
+    imagem: str = Field(default="", max_length=2000)
 
 
 class CriarPersonagemRequest(PersonagemRequest):
@@ -44,11 +45,14 @@ class CriarPersonagemRequest(PersonagemRequest):
     personalidade_mestre: str = Field(default="", max_length=8000)
     primeira_mensagem: str = Field(default="", max_length=4000)
     dialogos_exemplo: str = Field(default="", max_length=12000)
+    nome_mestre: str = Field(default="Mestre", max_length=80)
+    imagem_mestre: str = Field(default="", max_length=2000)
     sistema_rpg: bool = True
     sistema_id: str = Field(default="d20", max_length=40)
     d10_limiar_sucesso: int = Field(default=6, ge=2, le=10)
     d10_pontos_atributos: list[int] = Field(default_factory=lambda: [4, 3, 2])
     d10_atributos_jogador: dict = Field(default_factory=dict)
+
 
     @field_validator("d10_pontos_atributos", mode="before")
     @classmethod
@@ -68,6 +72,20 @@ class CriarPersonagemRequest(PersonagemRequest):
     @classmethod
     def atributos_d10_seguros(cls, valor):
         return valor if isinstance(valor, dict) else {}
+
+
+class EditarJogadorCampanhaRequest(BaseModel):
+    nome: Optional[str] = Field(default=None, max_length=80)
+    idade: Optional[int] = Field(default=None, ge=1, le=200)
+    genero: Optional[str] = Field(default=None, max_length=40)
+    aparencia: Optional[str] = Field(default=None, max_length=500)
+    historico: Optional[str] = Field(default=None, max_length=4000)
+    ficha_completa: Optional[str] = Field(default=None, max_length=20000)
+    imagem: Optional[str] = Field(default=None, max_length=2000)
+    pv: Optional[int] = Field(default=None, ge=0, le=10000)
+    pv_max: Optional[int] = Field(default=None, ge=1, le=10000)
+    inventario: Optional[list[str]] = None
+    atributos: Optional[dict] = None
 
 
 class AcaoRequest(BaseModel):

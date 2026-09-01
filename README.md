@@ -1,10 +1,11 @@
-# Mestre 0.9.1 - motor de RPG com IA
+# Mestre 0.10.0 - motor de RPG com IA
 
 ## Versão atual
 
-**0.9.1** — Neutralização completa dos prompts do motor (remoção de exemplos
-específicos de campanhas e checagens de cenário hardcoded), templates agnósticos
-a mundos específicos, e diretório `data/` desacoplado do controle de versão.
+**0.10.0** — Visual clean unificado (estilo Antigravity IDE), sidebar global compartilhada,
+foto do personagem do jogador, ficha completa e editável por campanha com isolamento atômico,
+nome e foto do Mestre (= foto do mundo) configuráveis por mundo, edição direta de mundo na Wiki,
+e consolidação de pontos de acesso no jogo.
 
 O projeto usa versionamento semântico: `MAIOR.MENOR.CORREÇÃO`. Recursos novos
 compatíveis elevam a versão menor; correções elevam a versão de correção;
@@ -70,6 +71,18 @@ O que já funciona de ponta a ponta:
 - **sincronização canônica manual** via botão "⚡ Sincronizar Wiki" ou
   endpoint `POST /campanhas/{id}/sincronizar_wiki`: analisa os acontecimentos
   recentes e atualiza fichas da Wiki, jogador e memórias de longo prazo
+- **foto do personagem e ficha completa editável em campanha**: suporte a campo `imagem`
+  no perfil do personagem e no Jogador da campanha; modal rico com visualização de todos
+  os atributos, inventário, PV e ficha estruturada, permitindo edição direta via
+  `PUT /campanhas/{id}/jogador` com persistência atômica sem alterar o molde original
+- **nome e foto do Mestre por mundo**: campos `nome_mestre` e `imagem_mestre` configuráveis
+  em `ConfiguracaoMundo`, onde a imagem é também a capa do mundo na Home/lista de mundos e
+  o avatar do Mestre no chat da sessão
+- **edição de mundo integrada e sem retorno**: botão "⚙️ Editar Configuração do Mundo"
+  acessível diretamente na visualização da Wiki do mundo (`/mundos/{id}/wiki`)
+- **design clean e sidebar global unificada**: componente compartilhado (`shared.css` e
+  `sidebar.js`) no estilo Antigravity IDE, com sub-navegação na Wiki em duas colunas sem conflitos,
+  e consolidação de pontos de acesso únicos para Ficha e Wiki no jogo
 
 ## Histórico de chat e edição de mensagens
 

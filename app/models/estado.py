@@ -44,6 +44,7 @@ class Jogador(BaseModel):
     inventario: List[str] = Field(default_factory=lambda: ["roupas rasgadas"])
     pv: int = 20
     pv_max: int = 20
+    imagem: str = ""
 
 
 class NPC(BaseModel):
@@ -97,6 +98,8 @@ class ConfiguracaoMundo(BaseModel):
     personalidade: str = "Um Mestre imparcial, descritivo e atento às escolhas do jogador."
     primeira_mensagem: str = "A aventura começa. O que você deseja fazer?"
     dialogos_exemplo: str = "*O mundo responde às escolhas do personagem.*"
+    nome_mestre: str = "Mestre"
+    imagem_mestre: str = ""
 
 
 class MensagemChat(BaseModel):

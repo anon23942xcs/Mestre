@@ -4,482 +4,371 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Mestre — Wiki</title>
+  <link rel="stylesheet" href="/static/shared.css">
   <style>
-    :root { color-scheme: dark; }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #1a1a2e;
-      color: #eee;
-    }
-    .layout {
-      min-height: 100vh;
-      display: grid;
-      grid-template-columns: 280px 1fr;
-    }
-    aside {
-      padding: 24px 16px;
-      background: #16213e;
-      border-right: 1px solid #244b77;
-      display: flex;
-      flex-direction: column;
-      max-height: 100vh;
-      position: sticky;
-      top: 0;
-      overflow-y: auto;
-    }
-    h1 {
-      color: #e94560;
-      font-size: 26px;
-      margin: 0 0 4px;
-    }
-    .voltar {
-      color: #f4d35e;
-      font-size: 13px;
-      text-decoration: none;
-      display: inline-block;
-      margin-bottom: 8px;
-    }
-    .voltar:hover { text-decoration: underline; }
-    .categorias {
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+    /* Estilos específicos da Wiki integrados ao Design System Clean */
     .categoria-bloco {
-      display: flex;
-      flex-direction: column;
+      margin-bottom: 4px;
     }
     .categoria-header {
       width: 100%;
-      border: 0;
-      background: transparent;
-      color: #ccd;
-      padding: 9px 12px;
-      text-align: left;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14.5px;
-      font-weight: 600;
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      transition: background 0.15s ease, color 0.15s ease;
+      align-items: center;
+      padding: 7px 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
     }
-    .categoria-header:hover, .categoria-header.ativa {
-      background: #0f3460;
-      color: #fff;
+    .categoria-header:hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+    }
+    .categoria-header.ativa {
+      background: #1f212c;
+      color: #ffffff;
     }
     .categoria-titulo-bloco {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
     .seta {
-      font-size: 11px;
-      color: #f4d35e;
-      transition: transform 0.15s ease;
-      display: inline-block;
-      width: 12px;
+      font-size: 10px;
+      color: var(--text-faint);
     }
     .contador-badge {
-      font-size: 12px;
-      color: #8fd694;
-      font-weight: normal;
+      font-size: 11px;
+      color: var(--text-faint);
     }
     .categoria-itens {
-      padding-left: 20px;
-      margin: 4px 0 8px;
+      padding: 2px 0 6px 18px;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 2px;
     }
     .item-btn {
       width: 100%;
-      border: 0;
-      background: transparent;
-      color: #b8b8d1;
-      padding: 7px 10px;
       text-align: left;
-      border-radius: 5px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 5px 8px;
+      border-radius: var(--radius-xs);
+      font-size: 12.5px;
       cursor: pointer;
-      font-size: 13.5px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       transition: all 0.15s ease;
-      display: block;
     }
     .item-btn:hover {
-      background: #0f3460;
-      color: #ffffff;
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
     }
     .item-btn.ativo {
-      background: #0f3460;
-      color: #ffffff;
-      border-left: 3px solid #e94560;
-      font-weight: bold;
+      color: var(--accent-coral);
+      background: rgba(233, 69, 96, 0.08);
+      font-weight: 600;
     }
     .sem-itens {
-      padding: 6px 10px;
-      font-size: 12px;
-      color: #788;
+      font-size: 11.5px;
+      color: var(--text-faint);
+      padding: 4px 8px;
       font-style: italic;
     }
-    main {
-      padding: 30px;
-      max-width: 1300px;
-      width: 100%;
-    }
-    .cabecalho {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    .cabecalho h2 { margin: 0; font-size: 24px; color: #fff; }
-    .cabecalho p { margin: 4px 0 0; color: #b8b8d1; font-size: 14px; }
-    .breadcrumb {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #b8b8d1;
-      font-size: 13.5px;
-      margin-bottom: 16px;
-    }
-    .breadcrumb a, .breadcrumb button {
-      color: #f4d35e;
-      text-decoration: none;
-      background: transparent;
-      border: 0;
-      padding: 0;
-      font: inherit;
-      cursor: pointer;
-    }
-    .breadcrumb a:hover, .breadcrumb button:hover { text-decoration: underline; }
-    .botao {
-      border: 0;
-      border-radius: 6px;
-      padding: 10px 16px;
-      color: white;
-      background: #e94560;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: bold;
-      transition: background 0.15s ease;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .botao:hover { background: #d33a53; }
-    .botao.secundario {
-      background: transparent;
-      color: #8fd694;
-      border: 1px solid #8fd694;
-    }
-    .botao.secundario:hover {
-      background: rgba(143, 214, 148, 0.12);
-    }
-    .botao.perigo {
-      background: transparent;
-      color: #ffabb5;
-      border: 1px solid #e94560;
-    }
-    .botao.perigo:hover {
-      background: rgba(233, 69, 96, 0.16);
-      color: #fff;
-    }
-    /* Grade de cards */
-    .catalogo-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 16px;
-      margin-top: 16px;
-    }
-    .ficha-card {
-      display: flex;
-      flex-direction: column;
-      padding: 18px;
-      border-radius: 10px;
-      background: #0f3460;
-      color: inherit;
-      border: 1px solid #244b77;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-      cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-    .ficha-card:hover {
-      border-color: #e94560;
-      transform: translateY(-3px);
-      box-shadow: 0 10px 22px rgba(0,0,0,0.4);
-    }
-    .ficha-card small {
-      color: #f4d35e;
-      font-size: 11px;
-      font-weight: bold;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin-bottom: 4px;
-    }
-    .ficha-card h3 {
-      margin: 4px 0 8px;
-      font-size: 18px;
-      color: #ffffff;
-    }
-    .ficha-card p {
-      color: #b8b8d1;
-      font-size: 13.5px;
-      line-height: 1.45;
-      margin: 0 0 12px;
-      flex: 1;
-    }
-    .ficha-card-img {
-      width: 100%;
-      height: 130px;
-      object-fit: cover;
-      border-radius: 6px;
-      margin-bottom: 10px;
-      border: 1px solid #244b77;
-    }
-    /* Painel de Perfil / Detalhe */
+
+    /* Painel do Perfil */
     .painel-perfil {
-      background: #16213e;
-      border: 1px solid #244b77;
-      border-radius: 14px;
-      padding: 28px;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 26px;
+      box-shadow: var(--shadow-card);
     }
     .perfil-layout {
       display: grid;
-      grid-template-columns: minmax(200px, 300px) 1fr;
-      gap: 28px;
-      align-items: start;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+      align-items: flex-start;
     }
-    .perfil-col-imagem {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+    @media (max-width: 900px) {
+      .perfil-layout { grid-template-columns: 1fr; }
     }
     .perfil-imagem {
       width: 100%;
-      max-height: 420px;
+      max-height: 340px;
       object-fit: cover;
-      border-radius: 10px;
-      border: 1px solid #244b77;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-    }
-    .perfil-col-info {
-      display: flex;
-      flex-direction: column;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      background: #111216;
     }
     .perfil-tag-categoria {
-      color: #f4d35e;
-      font-size: 12px;
-      font-weight: bold;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
       display: inline-block;
-      margin-bottom: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--accent-yellow);
+      margin-bottom: 6px;
     }
     .perfil-nome {
+      margin: 0 0 10px 0;
+      font-size: 24px;
+      font-weight: 700;
       color: #ffffff;
-      font-size: 28px;
-      margin: 0 0 12px;
-      line-height: 1.25;
+      line-height: 1.2;
     }
     .perfil-resumo {
-      color: #ccd;
-      font-size: 15px;
+      color: var(--text-muted);
+      font-size: 14px;
       line-height: 1.5;
-      margin: 0 0 16px;
-      padding: 10px 14px;
-      background: #0f3460;
-      border-left: 3px solid #e94560;
-      border-radius: 0 6px 6px 0;
-      font-style: italic;
-    }
-    .tags-container {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-    .badge-tag {
-      background: #0f3460;
-      color: #f4d35e;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 12px;
-      border: 1px solid #244b77;
+      margin: 0 0 16px 0;
     }
     .perfil-secao-titulo {
-      color: #f4d35e;
-      font-size: 15px;
-      margin: 20px 0 8px;
+      font-size: 13px;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      border-bottom: 1px solid #244b77;
+      color: var(--text-faint);
+      margin: 20px 0 8px 0;
+      border-bottom: 1px solid var(--border-subtle);
       padding-bottom: 4px;
     }
     .perfil-texto {
-      color: #eee;
-      font-size: 14.5px;
-      line-height: 1.65;
+      color: var(--text-main);
+      font-size: 13.5px;
+      line-height: 1.6;
       white-space: pre-wrap;
-      word-break: break-word;
+    }
+    .tags-container, .relacoes-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 10px 0;
+    }
+    .badge-tag {
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      background: #20222e;
+      border: 1px solid var(--border-card);
+      color: var(--text-muted);
+    }
+    .badge-relacao {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      background: #1b2030;
+      border: 1px solid #2d3855;
+      color: #92b4f2;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .badge-relacao:hover {
+      background: #27314d;
+      color: #ffffff;
     }
     .campos-tabela {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 8px;
+      margin: 10px 0;
+      font-size: 13px;
     }
     .campos-tabela th, .campos-tabela td {
       padding: 8px 12px;
+      border-bottom: 1px solid var(--border-subtle);
       text-align: left;
-      border-bottom: 1px solid #244b77;
     }
     .campos-tabela th {
-      color: #b8b8d1;
-      font-size: 13px;
-      width: 32%;
-    }
-    .campos-tabela td {
-      color: #ffffff;
-      font-size: 13.5px;
-    }
-    .relacoes-container {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-    .badge-relacao {
-      background: #0f3460;
-      color: #8fd694;
-      border: 1px solid #8fd694;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 13px;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: background 0.15s ease;
-    }
-    .badge-relacao:hover {
-      background: rgba(143, 214, 148, 0.15);
+      color: var(--text-muted);
+      width: 30%;
+      background: rgba(255, 255, 255, 0.02);
     }
     .perfil-acoes {
       display: flex;
+      flex-wrap: wrap;
       gap: 10px;
       margin-top: 24px;
       padding-top: 18px;
-      border-top: 1px solid #244b77;
-      flex-wrap: wrap;
+      border-top: 1px solid var(--border-subtle);
     }
-    .vazio, .erro {
-      padding: 24px;
-      background: #16213e;
-      border-radius: 10px;
-      color: #b8b8d1;
-      border: 1px solid #244b77;
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--text-muted);
     }
-    .erro { color: #ffabb5; border-color: #e94560; }
-    /* Modal Editor */
-    dialog {
-      width: min(680px, 94vw);
-      border: 1px solid #e94560;
-      border-radius: 12px;
-      color: #eee;
-      background: #16213e;
-      padding: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-    }
-    dialog::backdrop { background: rgba(0, 0, 0, 0.75); }
-    form { display: grid; gap: 10px; }
-    label { color: #b8b8d1; font-size: 13px; margin-top: 4px; font-weight: bold; }
-    input, textarea, select {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #345;
-      border-radius: 6px;
-      background: #0f3460;
-      color: white;
-      font: inherit;
-    }
-    input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: #e94560;
-    }
-    textarea { min-height: 75px; resize: vertical; }
-    .form-acoes { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
-    #form-status { min-height: 18px; color: #f4d35e; font-size: 13px; }
-    @media (max-width: 850px) {
-      .layout { grid-template-columns: 1fr; }
-      aside { border-right: 0; border-bottom: 1px solid #244b77; position: relative; max-height: none; }
-      .perfil-layout { grid-template-columns: 1fr; }
-      main { padding: 20px; }
+    .breadcrumb button {
+      background: transparent;
+      border: none;
+      color: var(--accent-coral);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 0;
     }
   </style>
 </head>
 <body>
-  <div class="layout">
-    <aside>
-      <h1>Mestre</h1>
-      <a class="voltar" id="voltar" href="/">← Campanhas</a>
-      <div class="categorias" id="categorias"></div>
-    </aside>
-    <main id="conteudo-principal">
-      <div class="cabecalho">
-        <div>
-          <h2 id="titulo-categoria">Personagens</h2>
-          <p id="subtitulo">Fichas canônicas do mundo.</p>
+  <div class="app-layout">
+    <!-- Sidebar Unificada Geral -->
+    <aside id="app-sidebar" class="app-sidebar"></aside>
+
+    <main class="app-main">
+      <!-- Topbar com Ações da Wiki e Edição do Mundo -->
+      <header class="app-topbar">
+        <div class="app-topbar-title">
+          <span>📖</span> <span id="topbar-titulo">Wiki</span>
         </div>
-        <button class="botao" id="nova-ficha">+ Nova ficha</button>
+        <div class="app-topbar-actions">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-editar-mundo" style="display:none;" title="Editar cenário, Mestre e regras do mundo">
+            ⚙️ Editar Configuração do Mundo
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" id="nova-ficha">
+            + Nova Ficha
+          </button>
+        </div>
+      </header>
+
+      <!-- Layout Interno da Wiki: Subnav de Categorias + Conteúdo -->
+      <div class="wiki-wrapper">
+        <aside class="wiki-subnav">
+          <div class="wiki-subnav-title">Categorias</div>
+          <div id="categorias"></div>
+        </aside>
+
+        <section class="wiki-content" id="conteudo-principal" aria-live="polite">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+            <div>
+              <h2 id="titulo-categoria" style="margin:0; font-size:20px; color:#fff;">Personagens</h2>
+              <p id="subtitulo" style="margin:4px 0 0; color:var(--text-muted); font-size:13px;">Fichas canônicas</p>
+            </div>
+          </div>
+          <div id="fichas" class="grid-cards">Carregando fichas…</div>
+        </section>
       </div>
-      <div id="fichas" class="catalogo-grid" aria-live="polite">Carregando fichas…</div>
     </main>
   </div>
 
-  <dialog id="editor">
+  <!-- Dialog de Criação / Edição de Ficha da Wiki -->
+  <dialog id="editor" class="clean-dialog">
     <form id="form-ficha">
-      <div class="cabecalho">
-        <h2 id="editor-titulo">Nova ficha</h2>
-        <button type="button" class="botao secundario" id="fechar-editor">Fechar</button>
+      <div class="dialog-header">
+        <h2 id="editor-titulo">Nova Ficha</h2>
+        <button type="button" class="btn btn-secondary btn-sm" id="fechar-editor">✕</button>
       </div>
-      <label>Tipo
-        <select id="ficha-tipo"></select>
-      </label>
-      <label>Título
-        <input id="ficha-titulo" required maxlength="160">
-      </label>
-      <label>Resumo
-        <textarea id="ficha-resumo" maxlength="1000"></textarea>
-      </label>
-      <label>Conteúdo
-        <textarea id="ficha-conteudo" maxlength="30000"></textarea>
-      </label>
-      <label>Campos estruturados (JSON)
-        <textarea id="ficha-campos" placeholder='{"região":"Norte"}'></textarea>
-      </label>
-      <label>URL da imagem
-        <input id="ficha-imagem" maxlength="2000" placeholder="https://exemplo.com/imagem.png">
-      </label>
-      <label>Tags (separadas por vírgula)
-        <input id="ficha-tags" placeholder="Guerreiro, Humano, Nobre">
-      </label>
-      <div id="form-status"></div>
-      <div class="form-acoes">
-        <button type="submit" class="botao">Salvar ficha</button>
+
+      <div class="form-grid">
+        <div style="display:grid; grid-template-columns: 1fr 2fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Tipo de Ficha</label>
+            <select id="ficha-tipo" class="select-clean"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Título</label>
+            <input id="ficha-titulo" class="input-clean" required maxlength="160" placeholder="Nome da entidade...">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">URL da Imagem</label>
+          <input id="ficha-imagem" class="input-clean" maxlength="2000" placeholder="https://exemplo.com/imagem.png">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Resumo Curto</label>
+          <textarea id="ficha-resumo" class="textarea-clean" maxlength="1000" placeholder="Breve resumo visível em cards..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Conteúdo Completo (Lore & Detalhes)</label>
+          <textarea id="ficha-conteudo" class="textarea-clean" style="min-height:140px;" maxlength="30000" placeholder="História detalhada, poderes, características..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Campos Estruturados (JSON opcional)</label>
+          <textarea id="ficha-campos" class="textarea-clean" style="font-family:monospace; min-height:60px;" placeholder='{"região": "Norte", "periculosidade": "Alta"}'></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tags (separadas por vírgula)</label>
+          <input id="ficha-tags" class="input-clean" placeholder="Guerreiro, Humano, Nobre">
+        </div>
+
+        <div id="form-status" style="color:var(--accent-yellow); font-size:13px; min-height:18px;"></div>
+      </div>
+
+      <div class="dialog-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('editor').close()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar Ficha</button>
       </div>
     </form>
   </dialog>
 
+  <!-- Dialog para Editar Configuração do Mundo (diretamente na página!) -->
+  <dialog id="editor-mundo" class="clean-dialog">
+    <form id="form-mundo">
+      <div class="dialog-header">
+        <h2>Editar Configuração do Mundo</h2>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('editor-mundo').close()">✕</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Nome do Mundo</label>
+          <input id="mundo-nome" class="input-clean" required maxlength="160">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição Geral</label>
+          <textarea id="mundo-descricao" class="textarea-clean" maxlength="4000"></textarea>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Nome do Mestre / Narrador</label>
+            <input id="mundo-nome-mestre" class="input-clean" maxlength="80">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Foto do Mestre & Capa do Mundo (URL)</label>
+            <input id="mundo-imagem-mestre" class="input-clean" maxlength="2000">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cenário Inicial & Contexto</label>
+          <textarea id="mundo-cenario" class="textarea-clean"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Personalidade do Mestre</label>
+          <textarea id="mundo-personalidade" class="textarea-clean"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Primeira Mensagem</label>
+          <textarea id="mundo-primeira" class="textarea-clean"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Diálogos de Exemplo</label>
+          <textarea id="mundo-dialogos" class="textarea-clean"></textarea>
+        </div>
+        <div id="mundo-status" style="color:var(--accent-yellow); font-size:13px; min-height:18px;"></div>
+      </div>
+
+      <div class="dialog-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('editor-mundo').close()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar Configuração do Mundo</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/static/sidebar.js"></script>
   <script>
     const tipos = [
       ['personagem', 'Personagens', 'Personagem'],
@@ -502,6 +391,7 @@
     let fichaSelecionadaId = partes[3] || null;
     let fichaEditando = null;
     let categoriasExpandidas = { [tipoAtual]: true };
+    let mundoDados = null;
 
     const esc = valor => {
       const el = document.createElement('span');
@@ -509,15 +399,89 @@
       return el.innerHTML;
     };
 
-    document.getElementById('voltar').href = eMundo ? '/mundos' : '/';
-    document.getElementById('voltar').textContent = eMundo ? '← Voltar para Mundos' : '← Voltar para Campanhas';
-    document.getElementById('subtitulo').textContent = eMundo ? 'Fichas canônicas deste mundo.' : 'Fichas desta campanha.';
-
     function urlApi(sufixo = '') {
       return eMundo
         ? `/api/mundos/${encodeURIComponent(escopoId)}/fichas${sufixo}`
         : `/campanhas/${encodeURIComponent(escopoId)}/catalogo${sufixo}`;
     }
+
+    async function inicializarTopo() {
+      const topbarTitulo = document.getElementById('topbar-titulo');
+      const subtitulo = document.getElementById('subtitulo');
+      const btnEditarMundo = document.getElementById('btn-editar-mundo');
+
+      if (eMundo) {
+        btnEditarMundo.style.display = 'inline-flex';
+        try {
+          const resp = await fetch(`/api/mundos/${encodeURIComponent(escopoId)}`);
+          if (resp.ok) {
+            mundoDados = await resp.json();
+            topbarTitulo.textContent = `Wiki: ${mundoDados.nome}`;
+            subtitulo.textContent = `Fichas canônicas do mundo "${mundoDados.nome}".`;
+          } else {
+            topbarTitulo.textContent = 'Wiki do Mundo';
+            subtitulo.textContent = 'Fichas canônicas do mundo.';
+          }
+        } catch {
+          topbarTitulo.textContent = 'Wiki do Mundo';
+        }
+      } else {
+        topbarTitulo.textContent = 'Wiki da Campanha';
+        subtitulo.textContent = 'Fichas e acontecimentos registrados nesta campanha.';
+      }
+    }
+
+    function abrirEditorMundo() {
+      if (!mundoDados) return;
+      const c = mundoDados.configuracao || {};
+      document.getElementById('mundo-nome').value = mundoDados.nome || '';
+      document.getElementById('mundo-descricao').value = mundoDados.descricao || '';
+      document.getElementById('mundo-nome-mestre').value = c.nome_mestre || 'Mestre';
+      document.getElementById('mundo-imagem-mestre').value = c.imagem_mestre || '';
+      document.getElementById('mundo-cenario').value = c.cenario || '';
+      document.getElementById('mundo-personalidade').value = c.personalidade || '';
+      document.getElementById('mundo-primeira').value = c.primeira_mensagem || '';
+      document.getElementById('mundo-dialogos').value = c.dialogos_exemplo || '';
+      document.getElementById('mundo-status').textContent = '';
+      document.getElementById('editor-mundo').showModal();
+    }
+
+    document.getElementById('btn-editar-mundo').onclick = abrirEditorMundo;
+
+    document.getElementById('form-mundo').onsubmit = async e => {
+      e.preventDefault();
+      if (!mundoDados) return;
+      const c = mundoDados.configuracao || {};
+      const payload = {
+        nome: document.getElementById('mundo-nome').value.trim(),
+        descricao: document.getElementById('mundo-descricao').value.trim(),
+        configuracao: {
+          ...c,
+          nome_mestre: document.getElementById('mundo-nome-mestre').value.trim() || 'Mestre',
+          imagem_mestre: document.getElementById('mundo-imagem-mestre').value.trim(),
+          cenario: document.getElementById('mundo-cenario').value.trim(),
+          personalidade: document.getElementById('mundo-personalidade').value.trim(),
+          primeira_mensagem: document.getElementById('mundo-primeira').value.trim(),
+          dialogos_exemplo: document.getElementById('mundo-dialogos').value.trim()
+        }
+      };
+
+      const resp = await fetch(`/api/mundos/${encodeURIComponent(escopoId)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!resp.ok) {
+        document.getElementById('mundo-status').textContent = 'Erro ao salvar alterações no mundo.';
+        return;
+      }
+
+      mundoDados = await resp.json();
+      document.getElementById('topbar-titulo').textContent = `Wiki: ${mundoDados.nome}`;
+      document.getElementById('editor-mundo').close();
+      alert('Configuração do mundo salva com sucesso!');
+    };
 
     function toggleCategoria(tipoId) {
       categoriasExpandidas[tipoId] = !categoriasExpandidas[tipoId];
@@ -605,9 +569,9 @@
            </div>`
         : '';
 
-      const imagemHtml = ficha.imagem
+      const imagemHtml = ficha.imagem && ficha.imagem.trim()
         ? `<div class="perfil-col-imagem">
-             <img class="perfil-imagem" src="${esc(ficha.imagem)}" alt="${esc(ficha.titulo)}" onerror="this.style.display='none'">
+             <img class="perfil-imagem" src="${esc(ficha.imagem.trim())}" alt="${esc(ficha.titulo)}" onerror="this.style.display='none'">
            </div>`
         : '';
 
@@ -615,7 +579,7 @@
         <div class="breadcrumb">
           <button type="button" onclick="verGradeCategoria('${esc(ficha.tipo)}')">${esc(nomePlural)}</button>
           <span>&gt;&gt;</span>
-          <span style="color:#ffffff;font-weight:bold;">${esc(ficha.titulo)}</span>
+          <span style="color:#ffffff; font-weight:bold;">${esc(ficha.titulo)}</span>
         </div>
 
         <article class="painel-perfil">
@@ -636,10 +600,10 @@
           </div>
 
           <div class="perfil-acoes">
-            <button type="button" class="botao" id="btn-editar-ficha">Editar ficha</button>
-            <button type="button" class="botao secundario" onclick="abrirEditor(null, '${esc(ficha.tipo)}')">+ Nova ficha</button>
-            <button type="button" class="botao secundario" onclick="verGradeCategoria('${esc(ficha.tipo)}')">Ver todas em grade</button>
-            <button type="button" class="botao perigo" id="btn-apagar-ficha">Apagar ficha</button>
+            <button type="button" class="btn btn-primary" id="btn-editar-ficha">Editar Ficha</button>
+            <button type="button" class="btn btn-secondary" onclick="abrirEditor(null, '${esc(ficha.tipo)}')">+ Nova Ficha</button>
+            <button type="button" class="btn btn-secondary" onclick="verGradeCategoria('${esc(ficha.tipo)}')">Ver Todas em Grade</button>
+            <button type="button" class="btn btn-danger" id="btn-apagar-ficha">Apagar Ficha</button>
           </div>
         </article>
       `;
@@ -649,118 +613,105 @@
     }
 
     function renderizarGrade() {
-      const [, nomePlural, nomeSingular] = tipos.find(([id]) => id === tipoAtual) || [tipoAtual, tipoAtual, tipoAtual];
+      const [, nomePlural] = tipos.find(([id]) => id === tipoAtual) || [tipoAtual, tipoAtual];
       const main = document.getElementById('conteudo-principal');
-      const grupo = fichas.filter(ficha => ficha.tipo === tipoAtual);
-
-      let cardsHtml = '';
-      if (!grupo.length) {
-        cardsHtml = `<div class="vazio">Nenhuma ficha de ${nomePlural.toLowerCase()} cadastrada ainda.</div>`;
-      } else {
-        cardsHtml = `<div class="catalogo-grid">` +
-          grupo.map(ficha => `
-            <article class="ficha-card" onclick="selecionarFicha('${esc(ficha.id)}')">
-              ${ficha.imagem ? `<img class="ficha-card-img" src="${esc(ficha.imagem)}" alt="${esc(ficha.titulo)}" onerror="this.style.display='none'">` : ''}
-              <small>${esc(nomeSingular)}</small>
-              <h3>${esc(ficha.titulo)}</h3>
-              <p>${esc(ficha.resumo || 'Sem resumo cadastrado.')}</p>
-              <div class="acoes" style="margin-top:auto;">
-                <button type="button" class="botao secundario" style="width:100%;font-size:13px;" onclick="event.stopPropagation(); selecionarFicha('${esc(ficha.id)}')">Ver detalhes</button>
-              </div>
-            </article>
-          `).join('') +
-        `</div>`;
-      }
 
       main.innerHTML = `
-        <div class="cabecalho">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
           <div>
-            <h2>${esc(nomePlural)}</h2>
-            <p>${eMundo ? 'Fichas canônicas deste mundo.' : 'Fichas desta campanha.'}</p>
+            <h2 id="titulo-categoria" style="margin:0; font-size:20px; color:#fff;">${esc(nomePlural)}</h2>
+            <p id="subtitulo" style="margin:4px 0 0; color:var(--text-muted); font-size:13px;">${eMundo ? 'Fichas canônicas deste mundo.' : 'Fichas desta campanha.'}</p>
           </div>
-          <button type="button" class="botao" id="nova-ficha">+ Nova ficha</button>
         </div>
-        ${cardsHtml}
+        <div id="fichas" class="grid-cards"></div>
       `;
 
-      document.getElementById('nova-ficha').onclick = () => abrirEditor(null, tipoAtual);
+      const fichasFiltradas = fichas.filter(f => f.tipo === tipoAtual);
+      const container = document.getElementById('fichas');
+
+      if (fichasFiltradas.length === 0) {
+        container.innerHTML = `<div style="grid-column:1/-1; padding:28px; background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-md); color:var(--text-muted); text-align:center;">Nenhuma ficha cadastrada nesta categoria. Clique em "+ Nova Ficha" para criar a primeira.</div>`;
+        return;
+      }
+
+      container.innerHTML = fichasFiltradas.map(f => {
+        const imgHtml = f.imagem && f.imagem.trim()
+          ? `<img class="clean-card-img" src="${esc(f.imagem.trim())}" alt="${esc(f.titulo)}" onerror="this.style.display='none'">`
+          : '';
+
+        return `
+          <article class="clean-card" style="cursor:pointer;" onclick="selecionarFicha('${esc(f.id)}')">
+            ${imgHtml}
+            <div class="clean-card-badge">${esc(f.tipo)}</div>
+            <h3 class="clean-card-title">${esc(f.titulo)}</h3>
+            <p class="clean-card-desc">${esc(f.resumo || (f.conteudo ? f.conteudo.slice(0, 120) + '...' : 'Sem resumo'))}</p>
+            <div class="clean-card-actions" onclick="event.stopPropagation();">
+              <button type="button" class="btn btn-primary btn-sm" onclick="selecionarFicha('${esc(f.id)}')">Ver Detalhes</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="abrirEditor(fichas.find(x => x.id === '${esc(f.id)}'))">Editar</button>
+              <button type="button" class="btn btn-danger btn-sm" onclick="apagarFicha('${esc(f.id)}')">🗑️</button>
+            </div>
+          </article>
+        `;
+      }).join('');
     }
 
     function renderizar() {
       renderizarSidebar();
       if (fichaSelecionadaId) {
-        const ficha = fichas.find(f => f.id === fichaSelecionadaId);
-        if (ficha) {
-          renderizarPainelPerfil(ficha);
+        const f = fichas.find(item => item.id === fichaSelecionadaId);
+        if (f) {
+          renderizarPainelPerfil(f);
           return;
         }
       }
       renderizarGrade();
     }
 
-    async function carregar() {
-      const area = document.getElementById('fichas');
+    async function carregarFichas() {
       try {
-        const resposta = await fetch(urlApi());
-        if (!resposta.ok) {
-          throw new Error(resposta.status === 404 ? `${eMundo ? 'Mundo' : 'Campanha'} não encontrado.` : 'Não foi possível carregar a Wiki.');
-        }
-        fichas = await resposta.json();
-        
-        // Se tinha ID na URL ou se nenhuma selecionada, manter estado
-        if (fichaSelecionadaId && !fichas.some(f => f.id === fichaSelecionadaId)) {
-          fichaSelecionadaId = null;
-        }
-        
+        const resp = await fetch(urlApi());
+        if (!resp.ok) throw new Error('Não foi possível carregar o catálogo de fichas.');
+        fichas = await resp.json();
         renderizar();
-      } catch (erro) {
-        const main = document.getElementById('conteudo-principal');
-        main.innerHTML = `<div class="erro">${esc(erro.message)}</div>`;
+      } catch (err) {
+        document.getElementById('conteudo-principal').innerHTML = `<div style="color:var(--accent-coral); padding:20px;">${esc(err.message)}</div>`;
       }
     }
 
-    function abrirEditor(ficha = null, tipoPredefinido = null) {
+    function abrirEditor(ficha = null, tipoPadrao = null) {
       fichaEditando = ficha;
-      document.getElementById('editor-titulo').textContent = ficha ? 'Editar ficha' : 'Nova ficha';
+      document.getElementById('editor-titulo').textContent = ficha ? 'Editar Ficha' : 'Nova Ficha';
       
-      const selectTipo = document.getElementById('ficha-tipo');
-      selectTipo.innerHTML = tipos.map(([id, nomePlural, nomeSingular]) => `<option value="${id}">${nomeSingular}</option>`).join('');
-      selectTipo.value = ficha?.tipo || tipoPredefinido || tipoAtual;
+      const tipoSelect = document.getElementById('ficha-tipo');
+      tipoSelect.innerHTML = tipos.map(([id, , nomeSingular]) => `<option value="${id}">${nomeSingular}</option>`).join('');
 
-      document.getElementById('ficha-titulo').value = ficha?.titulo || '';
-      document.getElementById('ficha-resumo').value = ficha?.resumo || '';
-      document.getElementById('ficha-conteudo').value = ficha?.conteudo || '';
-      document.getElementById('ficha-campos').value = JSON.stringify(ficha?.campos || {}, null, 2);
-      document.getElementById('ficha-imagem').value = ficha?.imagem || '';
-      document.getElementById('ficha-tags').value = (ficha?.tags || []).join(', ');
+      tipoSelect.value = ficha ? ficha.tipo : (tipoPadrao || tipoAtual);
+      document.getElementById('ficha-titulo').value = ficha ? ficha.titulo : '';
+      document.getElementById('ficha-resumo').value = ficha ? (ficha.resumo || '') : '';
+      document.getElementById('ficha-conteudo').value = ficha ? (ficha.conteudo || '') : '';
+      document.getElementById('ficha-campos').value = ficha && ficha.campos ? JSON.stringify(ficha.campos, null, 2) : '';
+      document.getElementById('ficha-imagem').value = ficha ? (ficha.imagem || '') : '';
+      document.getElementById('ficha-tags').value = ficha && ficha.tags ? ficha.tags.join(', ') : '';
       document.getElementById('form-status').textContent = '';
+
       document.getElementById('editor').showModal();
     }
 
-    async function apagarFicha(fichaId) {
-      if (!confirm('Deseja realmente apagar esta ficha?')) return;
-      try {
-        const resp = await fetch(urlApi(`/${encodeURIComponent(fichaId)}`), { method: 'DELETE' });
-        if (!resp.ok) throw new Error('Não foi possível apagar a ficha.');
-        fichas = fichas.filter(f => f.id !== fichaId);
-        fichaSelecionadaId = null;
-        renderizar();
-      } catch (e) {
-        alert(e.message || 'Erro ao apagar ficha.');
-      }
-    }
-
+    document.getElementById('nova-ficha').onclick = () => abrirEditor(null, tipoAtual);
     document.getElementById('fechar-editor').onclick = () => document.getElementById('editor').close();
 
     document.getElementById('form-ficha').onsubmit = async evento => {
       evento.preventDefault();
-      let campos;
-      const status = document.getElementById('form-status');
-      try {
-        campos = JSON.parse(document.getElementById('ficha-campos').value || '{}');
-      } catch {
-        status.textContent = 'Os campos estruturados precisam ser um JSON válido.';
-        return;
+      const statusEl = document.getElementById('form-status');
+      let camposObj = {};
+      const camposRaw = document.getElementById('ficha-campos').value.trim();
+      if (camposRaw) {
+        try {
+          camposObj = JSON.parse(camposRaw);
+        } catch {
+          statusEl.textContent = 'Os campos estruturados devem ser um JSON válido.';
+          return;
+        }
       }
 
       const dados = {
@@ -768,41 +719,48 @@
         titulo: document.getElementById('ficha-titulo').value.trim(),
         resumo: document.getElementById('ficha-resumo').value.trim(),
         conteudo: document.getElementById('ficha-conteudo').value.trim(),
-        campos,
+        campos: camposObj,
         imagem: document.getElementById('ficha-imagem').value.trim(),
-        tags: document.getElementById('ficha-tags').value.split(',').map(tag => tag.trim()).filter(Boolean)
+        tags: document.getElementById('ficha-tags').value.split(',').map(t => t.trim()).filter(Boolean)
       };
 
-      const url = urlApi(fichaEditando ? `/${encodeURIComponent(fichaEditando.id)}` : '');
+      const url = fichaEditando ? urlApi(`/${encodeURIComponent(fichaEditando.id)}`) : urlApi();
       const metodo = fichaEditando ? 'PUT' : 'POST';
 
-      try {
-        const resposta = await fetch(url, {
-          method: metodo,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(dados)
-        });
+      const resp = await fetch(url, {
+        method: metodo,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados)
+      });
 
-        if (!resposta.ok) {
-          const erro = await resposta.json().catch(() => ({}));
-          status.textContent = erro.detail || 'Não foi possível salvar a ficha.';
-          return;
-        }
-
-        const fichaSalva = await resposta.json();
-        document.getElementById('editor').close();
-        
-        tipoAtual = fichaSalva.tipo;
-        categoriasExpandidas[tipoAtual] = true;
-        fichaSelecionadaId = fichaSalva.id;
-        
-        await carregar();
-      } catch (err) {
-        status.textContent = 'Erro ao conectar ao servidor.';
+      if (!resp.ok) {
+        const erro = await resp.json().catch(() => ({}));
+        statusEl.textContent = erro.detail || 'Erro ao salvar ficha.';
+        return;
       }
+
+      const fichaSalva = await resp.json();
+      document.getElementById('editor').close();
+      await carregarFichas();
+      selecionarFicha(fichaSalva.id);
     };
 
-    carregar();
+    async function apagarFicha(id) {
+      const f = fichas.find(item => item.id === id);
+      if (!confirm(`Tem certeza que deseja apagar a ficha "${f?.titulo || id}"?`)) return;
+
+      const resp = await fetch(urlApi(`/${encodeURIComponent(id)}`), { method: 'DELETE' });
+      if (!resp.ok) {
+        alert('Não foi possível apagar a ficha.');
+        return;
+      }
+
+      fichaSelecionadaId = null;
+      await carregarFichas();
+    }
+
+    inicializarTopo();
+    carregarFichas();
   </script>
 </body>
 </html>

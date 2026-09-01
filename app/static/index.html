@@ -1,205 +1,59 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mestre - RPG com IA</title>
+    <title>Mestre — Campanha</title>
+    <link rel="stylesheet" href="/static/shared.css">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* ─── Layout do Jogo / Campanha (Clean Antigravity) ─── */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: #1a1a2e;
-            color: #eee;
-            height: 100vh;
-            display: flex;
             overflow: hidden;
+            background: var(--bg-root);
         }
 
-        /* ─── BARRA LATERAL (SIDEBAR) ─── */
-        .sidebar {
-            width: 260px;
-            background: #121829;
-            border-right: 1px solid #1f2d4d;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 20px 16px;
-            flex-shrink: 0;
-            z-index: 10;
-        }
-        .sidebar-top {
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-        }
-        .sidebar-logo {
-            font-size: 24px;
-            font-weight: 900;
-            letter-spacing: -0.5px;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            text-decoration: none;
-            padding-left: 4px;
-        }
-        .sidebar-logo span {
-            color: #8fd694;
-        }
-        .btn-criar-jogo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background: rgba(143, 214, 148, 0.1);
-            border: 1px solid #8fd694;
-            color: #8fd694;
-            padding: 10px 14px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-        .btn-criar-jogo:hover {
-            background: #8fd694;
-            color: #121829;
-        }
-        .sidebar-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-top: 6px;
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            color: #b8b8d1;
-            text-decoration: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.15s ease, color 0.15s ease;
-        }
-        .nav-item:hover, .nav-item.active {
-            background: #16213e;
-            color: #ffffff;
-        }
-        .nav-item .icon {
-            font-size: 16px;
-            width: 20px;
-            text-align: center;
-            color: #f4d35e;
-        }
-        .sidebar-bottom {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            border-top: 1px solid #1f2d4d;
-            padding-top: 14px;
-        }
-        .card-jogador-sidebar {
-            background: #16213e;
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 12.5px;
-            border: 1px solid #244b77;
-        }
-        .card-jogador-sidebar .nome {
-            color: #f4d35e;
-            font-weight: bold;
-            font-size: 13.5px;
-        }
-        .card-jogador-sidebar .info {
-            color: #aaa;
-            margin-top: 2px;
-        }
-
-        /* ─── ÁREA PRINCIPAL (MAIN STAGE) ─── */
-        .main-stage {
+        .game-main {
             flex: 1;
+            min-width: 0;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-            background: #1a1a2e;
             position: relative;
+            background: var(--bg-root);
+            overflow: hidden;
         }
 
-        /* ─── CABEÇALHO SUPERIOR (TOP BAR) ─── */
-        .top-bar {
-            height: 56px;
-            background: #121829;
-            border-bottom: 1px solid #1f2d4d;
+        /* Topbar de Sessão */
+        .session-topbar {
+            height: 54px;
+            min-height: 54px;
+            background: var(--bg-topbar);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 24px;
-            flex-shrink: 0;
+            gap: 14px;
+            z-index: 20;
         }
-        .top-bar-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        .btn-voltar {
-            color: #b8b8d1;
-            text-decoration: none;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            transition: background 0.15s;
-        }
-        .btn-voltar:hover {
-            background: #16213e;
-            color: #fff;
-        }
-        .top-bar-location {
-            color: #f4d35e;
-            font-size: 14px;
-            font-weight: 600;
+        .session-location {
             display: flex;
             align-items: center;
             gap: 8px;
+            font-size: 13.5px;
+            color: var(--text-main);
+            font-weight: 500;
         }
-        .top-bar-right {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .btn-top-action {
-            background: #16213e;
-            border: 1px solid #244b77;
-            color: #eee;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12.5px;
+        .session-location span.loc-name {
             font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.15s;
-        }
-        .btn-top-action:hover {
-            border-color: #f4d35e;
-            color: #f4d35e;
+            color: #ffffff;
         }
 
-        /* ─── ÁREA DE CHAT E NARRATIVA (SCROLLABLE STREAM) ─── */
+        /* Stream de Mensagens com Scroll */
         .chat-stream-container {
             flex: 1;
             overflow-y: auto;
-            padding: 24px 20px;
+            padding: 24px 20px 30px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -210,32 +64,30 @@
             max-width: 860px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
         }
 
-        /* ─── CARD DE MENSAGEM (ESTILO MODERNO / JANITOR) ─── */
+        /* Card de Mensagem */
         .chat-msg-card {
             display: flex;
-            gap: 16px;
+            gap: 14px;
             width: 100%;
-            padding: 16px 20px;
-            border-radius: 12px;
-            background: #141f36;
-            border: 1px solid #1f2d4d;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+            padding: 18px 20px;
+            border-radius: var(--radius-md);
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            box-shadow: var(--shadow-card);
             position: relative;
-            transition: border-color 0.15s;
-        }
-        .chat-msg-card.jogador {
-            background: #152238;
-            border-left: 3px solid #8fd694;
-        }
-        .chat-msg-card.mestre {
-            background: #141f36;
-            border-left: 3px solid #e94560;
+            transition: border-color 0.15s ease, transform 0.15s ease;
         }
         .chat-msg-card:hover {
-            border-color: #244b77;
+            border-color: var(--border-card-hover);
+        }
+        .chat-msg-card.jogador {
+            border-left: 3px solid var(--accent-green);
+        }
+        .chat-msg-card.mestre {
+            border-left: 3px solid var(--accent-coral);
         }
 
         /* Avatar */
@@ -243,38 +95,36 @@
             flex-shrink: 0;
         }
         .msg-avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 8px;
-            object-fit: cover;
-            border: 1px solid #244b77;
-            background: #0f3460;
+            width: 38px;
+            height: 38px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            background: #191b24;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            font-size: 16px;
+            font-weight: 700;
+            font-size: 14px;
             color: #ffffff;
             overflow: hidden;
         }
-        .msg-avatar img {
+        .msg-avatar-img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            border-radius: inherit;
         }
 
-        /* Corpo da Mensagem */
+        /* Conteúdo do Card */
         .msg-main {
             flex: 1;
             min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
         }
         .msg-header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
         }
         .msg-author-row {
             display: flex;
@@ -282,31 +132,37 @@
             gap: 8px;
         }
         .msg-author-name {
-            font-size: 15px;
             font-weight: 700;
+            font-size: 14px;
             color: #ffffff;
         }
         .msg-author-badge {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: rgba(244, 211, 94, 0.15);
-            color: #f4d35e;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: var(--radius-full);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid var(--border-subtle);
+        }
+        .msg-author-badge.user {
+            color: var(--accent-green);
+            background: rgba(143, 214, 148, 0.1);
+            border-color: rgba(143, 214, 148, 0.25);
         }
         .msg-author-badge.bot {
-            background: rgba(233, 69, 96, 0.15);
-            color: #e94560;
+            color: #ff8598;
+            background: rgba(233, 69, 96, 0.1);
+            border-color: rgba(233, 69, 96, 0.25);
         }
 
-        /* Botões de Ação no Topo Direito (Lixeira / Editar) */
+        /* Ações no Topo do Card */
         .msg-actions-top {
             display: flex;
             align-items: center;
-            gap: 6px;
-            opacity: 0.5;
-            transition: opacity 0.15s;
+            gap: 4px;
+            opacity: 0.35;
+            transition: opacity 0.15s ease;
         }
         .chat-msg-card:hover .msg-actions-top {
             opacity: 1;
@@ -314,586 +170,407 @@
         .icon-action-btn {
             background: transparent;
             border: none;
-            color: #b8b8d1;
+            color: var(--text-muted);
             cursor: pointer;
-            padding: 4px 6px;
-            border-radius: 4px;
+            padding: 4px;
+            border-radius: var(--radius-xs);
             font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.15s;
+            line-height: 1;
+            transition: all 0.15s ease;
         }
         .icon-action-btn:hover {
             color: #ffffff;
-            background: #1f2d4d;
+            background: rgba(255, 255, 255, 0.08);
         }
         .icon-action-btn.delete:hover {
-            color: #e94560;
+            color: #ff7b90;
             background: rgba(233, 69, 96, 0.15);
         }
 
-        /* Conteúdo formatado da mensagem */
+        /* Corpo da Mensagem */
         .msg-body {
-            font-size: 15px;
-            line-height: 1.7;
-            color: #ddd;
-            word-break: break-word;
+            color: var(--text-main);
+            font-size: 14px;
+            line-height: 1.6;
         }
-        .msg-body .narrativa-paragrafo {
-            margin: 0 0 12px 0;
+        .narrativa-paragrafo {
+            margin: 0 0 10px 0;
         }
-        .msg-body .narrativa-paragrafo:last-child {
+        .narrativa-paragrafo:last-child {
             margin-bottom: 0;
         }
-        .msg-body em {
-            font-style: italic;
-            color: #b8b8d1;
+        .fala {
+            color: #a3cdff;
+            font-weight: 500;
         }
-        .msg-body .fala {
-            color: #ffffff;
-            font-weight: 600;
-        }
-        .msg-body .pensamento {
-            background: #0f3460;
-            color: #f4d35e;
-            padding: 2px 8px;
-            border-radius: 6px;
+        .pensamento {
             font-family: monospace;
             font-size: 13px;
-            border: 1px solid #244b77;
-            display: inline-block;
-            margin: 2px 0;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 6px;
+            border-radius: var(--radius-xs);
+            color: var(--accent-yellow);
         }
         .chat-img-wrap {
-            margin: 14px 0;
+            margin: 12px 0;
             text-align: center;
         }
         .chat-img {
             max-width: 100%;
-            max-height: 440px;
-            border-radius: 8px;
-            border: 1px solid #244b77;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+            max-height: 380px;
             object-fit: cover;
-            display: inline-block;
-            vertical-align: middle;
-            margin: 6px 0;
-        }
-
-        /* Rodapé da Mensagem (Regenerar e Opções) */
-        .msg-footer {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 4px;
-            opacity: 0.6;
-            transition: opacity 0.15s;
-        }
-        .chat-msg-card:hover .msg-footer {
-            opacity: 1;
-        }
-        .btn-regenerar {
-            background: transparent;
-            border: 1px solid transparent;
-            color: #b8b8d1;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12.5px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            transition: all 0.15s;
-        }
-        .btn-regenerar:hover {
-            color: #8fd694;
-            background: rgba(143, 214, 148, 0.1);
-            border-color: #8fd694;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
         }
 
         /* Edição Inline */
         .msg-edit-box {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            width: 100%;
-            margin-top: 6px;
+            gap: 8px;
+            margin-top: 8px;
         }
         .msg-edit-textarea {
             width: 100%;
-            min-height: 140px;
-            background: #0f3460;
-            color: #ffffff;
-            border: 1px solid #f4d35e;
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 14.5px;
-            line-height: 1.6;
+            min-height: 100px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-input);
+            border: 1px solid var(--border-card);
+            color: var(--text-main);
             font-family: inherit;
-            resize: vertical;
+            font-size: 13.5px;
             outline: none;
+            resize: vertical;
         }
         .msg-edit-buttons {
             display: flex;
             justify-content: flex-end;
             gap: 8px;
         }
-        .btn-salvar-edicao {
-            background: #e94560;
-            color: white;
-            border: none;
-            padding: 7px 14px;
-            border-radius: 6px;
-            font-size: 12.5px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .btn-salvar-edicao:hover {
-            background: #d33a53;
-        }
-        .btn-cancelar-edicao {
-            background: transparent;
-            color: #b8b8d1;
-            border: 1px solid #345;
-            padding: 7px 12px;
-            border-radius: 6px;
-            font-size: 12.5px;
-            cursor: pointer;
-        }
-        .btn-cancelar-edicao:hover {
-            background: #16213e;
-            color: #fff;
+
+        /* Rodapé do Card (Regenerar) */
+        .msg-footer {
+            margin-top: 10px;
+            display: flex;
+            justify-content: flex-end;
         }
 
-        /* ─── INDICADOR DE DIGITAÇÃO / GERANDO TEXTO ─── */
+        /* Typing Indicator */
         .typing-card {
             display: flex;
-            gap: 16px;
-            width: 100%;
-            padding: 16px 20px;
-            border-radius: 12px;
-            background: #141f36;
-            border-left: 3px solid #e94560;
-            border: 1px solid #1f2d4d;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            width: fit-content;
+            animation: fadeIn 0.2s ease-in;
         }
         .typing-content {
             display: flex;
-            flex-direction: column;
-            gap: 4px;
-            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
         }
         .typing-author {
-            font-size: 14px;
-            font-weight: 700;
-            color: #ffffff;
-        }
-        .typing-animation {
-            font-size: 14px;
-            color: #f4d35e;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            letter-spacing: 1px;
+            font-weight: 600;
+            color: #fff;
         }
         .dots-wave {
             display: inline-flex;
             gap: 2px;
         }
         .dots-wave span {
-            font-size: 18px;
-            line-height: 10px;
-            animation: waveDot 1.4s infinite ease-in-out both;
+            animation: blinkDots 1.4s infinite both;
+            font-weight: bold;
+            color: var(--accent-coral);
+            font-size: 16px;
+            line-height: 1;
         }
-        .dots-wave span:nth-child(1) { animation-delay: -0.32s; }
-        .dots-wave span:nth-child(2) { animation-delay: -0.16s; }
-        .dots-wave span:nth-child(3) { animation-delay: 0s; }
-        .dots-wave span:nth-child(4) { animation-delay: 0.16s; }
+        .dots-wave span:nth-child(2) { animation-delay: 0.2s; }
+        .dots-wave span:nth-child(3) { animation-delay: 0.4s; }
+        .dots-wave span:nth-child(4) { animation-delay: 0.6s; }
 
-        @keyframes waveDot {
-            0%, 80%, 100% {
-                opacity: 0.2;
-                transform: scale(0.8);
-            }
-            40% {
-                opacity: 1;
-                transform: scale(1.3);
-                color: #e94560;
-            }
+        @keyframes blinkDots {
+            0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+            40% { opacity: 1; transform: scale(1.2); }
         }
 
-        /* ─── BARRA DE ENTRADA FIXA INFERIOR ─── */
-        .bottom-input-bar {
-            background: #121829;
-            border-top: 1px solid #1f2d4d;
-            padding: 14px 24px;
-            flex-shrink: 0;
-            display: flex;
-            justify-content: center;
+        /* Rodapé Flutuante de Entrada (Estilo Antigravity) */
+        .chat-input-wrapper {
+            position: relative;
+            padding: 12px 20px 20px;
+            background: linear-gradient(180deg, rgba(14, 15, 19, 0) 0%, var(--bg-root) 35%);
+            z-index: 10;
         }
-        .input-box-container {
-            width: 100%;
+        .chat-input-box {
             max-width: 860px;
-            background: #0f3460;
-            border: 1px solid #244b77;
-            border-radius: 12px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            padding: 12px 16px;
+            box-shadow: var(--shadow-dialog);
             display: flex;
             flex-direction: column;
-            padding: 12px 14px;
-            gap: 8px;
-            transition: border-color 0.2s;
+            gap: 10px;
+            transition: border-color 0.15s ease;
         }
-        .input-box-container:focus-within {
-            border-color: #e94560;
+        .chat-input-box:focus-within {
+            border-color: var(--border-card-hover);
         }
-        .input-textarea {
+        .chat-input-textarea {
             width: 100%;
-            min-height: 52px;
-            max-height: 160px;
+            min-height: 48px;
+            max-height: 220px;
             background: transparent;
             border: none;
-            color: #ffffff;
-            font-size: 14.5px;
-            line-height: 1.5;
-            font-family: inherit;
-            resize: none;
             outline: none;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
         }
-        .input-textarea::placeholder {
-            color: #7888a5;
+        .chat-input-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 6px;
+            border-top: 1px solid var(--border-subtle);
         }
-        .input-footer-row {
+        .chat-input-author {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 6px;
+            font-size: 12.5px;
+            color: var(--text-muted);
+            font-weight: 500;
         }
-        .input-hint-user {
+        .chat-input-actions {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 12.5px;
-            color: #b8b8d1;
-        }
-        .input-actions-right {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .btn-enviar-acao {
-            background: #e94560;
-            color: white;
-            border: none;
-            padding: 8px 18px;
-            border-radius: 8px;
-            font-size: 13.5px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.15s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-enviar-acao:hover {
-            background: #d33a53;
-        }
-        .btn-enviar-acao:disabled {
-            background: #344;
-            color: #777;
-            cursor: not-allowed;
-        }
-        .floating-wiki-btn {
-            background: #16213e;
-            border: 1px solid #8fd694;
-            color: #8fd694;
-            padding: 7px 12px;
-            border-radius: 6px;
-            font-size: 12.5px;
-            font-weight: 600;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-        .floating-wiki-btn:hover {
-            background: #8fd694;
-            color: #121829;
         }
 
-        /* ─── TELA DE NOVO JOGO / SELEÇÃO ─── */
+        /* Tela de Setup Inicial */
         .setup-screen {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex: 1;
             padding: 24px;
-            overflow-y: auto;
         }
         .setup-card {
-            background: #16213e;
-            border: 1px solid #244b77;
-            border-radius: 14px;
-            padding: 30px;
+            max-width: 480px;
             width: 100%;
-            max-width: 520px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        }
-        .setup-card h2 {
-            color: #f4d35e;
-            margin-bottom: 8px;
-            font-size: 20px;
-        }
-        .setup-card p {
-            color: #b8b8d1;
-            font-size: 13.5px;
-            margin-bottom: 20px;
-        }
-        .form-group {
-            margin-bottom: 16px;
-        }
-        .form-group label {
-            display: block;
-            font-size: 12.5px;
-            font-weight: bold;
-            color: #aaa;
-            margin-bottom: 6px;
-        }
-        .form-group select {
-            width: 100%;
-            padding: 12px;
-            background: #0f3460;
-            color: white;
-            border: 1px solid #244b77;
-            border-radius: 8px;
-            font-size: 14px;
-            outline: none;
-        }
-        .btn-iniciar-campanha {
-            width: 100%;
-            background: #e94560;
-            color: white;
-            border: none;
-            padding: 13px;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: background 0.15s;
-        }
-        .btn-iniciar-campanha:hover {
-            background: #d33a53;
-        }
-
-        /* ─── MODAIS ─── */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal.active {
-            display: flex;
-        }
-        .modal-content {
-            background: #16213e;
-            padding: 30px;
-            border-radius: 12px;
-            max-width: 90%;
-            max-height: 90%;
-            overflow-y: auto;
-            border: 2px solid #e94560;
-            position: relative;
-        }
-        .modal-content h3 {
-            color: #f4d35e;
-            margin-top: 0;
-            margin-bottom: 12px;
-        }
-        .modal-content pre {
-            background: #0f3460;
-            padding: 16px;
-            border-radius: 8px;
-            overflow-x: auto;
-            font-size: 13px;
-            color: #ddd;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            line-height: 1.6;
-        }
-        .modal-close {
-            color: #e94560;
-            cursor: pointer;
-            font-size: 28px;
-            font-weight: bold;
-            position: absolute;
-            top: 16px;
-            right: 20px;
-        }
-        .modal-close:hover {
-            color: #f4d35e;
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            box-shadow: var(--shadow-dialog);
         }
     </style>
 </head>
 <body>
+    <div class="app-layout">
+        <!-- Sidebar Unificada Geral -->
+        <aside id="app-sidebar" class="app-sidebar"></aside>
 
-    <!-- ─── BARRA LATERAL (SIDEBAR) ─── -->
-    <aside class="sidebar">
-        <div class="sidebar-top">
-            <a href="/" class="sidebar-logo">
-                Mestre<span>.</span>
-            </a>
-
-            <button class="btn-criar-jogo" onclick="novaAventura()">
-                + Criar Jogo
-            </button>
-
-            <nav class="sidebar-nav">
-                <a href="/" class="nav-item">
-                    <span class="icon">🏠</span> Início
-                </a>
-                <a href="javascript:void(0)" class="nav-item" onclick="alternarListaCampanhas()">
-                    <span class="icon">🎮</span> Jogos / Campanhas
-                </a>
-                <a href="/mundos" class="nav-item">
-                    <span class="icon">🌍</span> Mundos
-                </a>
-                <a href="/personagens" class="nav-item">
-                    <span class="icon">👤</span> Personagens
-                </a>
-                <a id="link-wiki-sidebar" href="/" class="nav-item" style="display:none;">
-                    <span class="icon">✦</span> Wiki da Campanha
-                </a>
-            </nav>
-        </div>
-
-        <div class="sidebar-bottom">
-            <div class="card-jogador-sidebar" id="sidebar-card-jogador" style="display:none;">
-                <div class="nome" id="sidebar-nome-jogador">Jogador</div>
-                <div class="info" id="sidebar-info-jogador">Personagem</div>
-            </div>
-            <button class="nav-item" id="sidebar-btn-ficha" onclick="abrirFicha()" style="display:none; width:100%; border:none; background:transparent; justify-content:flex-start;">
-                <span class="icon">📋</span> Ver Ficha Completa
-            </button>
-        </div>
-    </aside>
-
-    <!-- ─── ÁREA PRINCIPAL DO JOGO ─── -->
-    <main class="main-stage">
-        
-        <!-- TELA DE SELEÇÃO INICIAL (SE NENHUMA CAMPANHA CARREGADA) -->
-        <div id="personagem-area" class="setup-screen" style="display:none;">
-            <div class="setup-card">
-                <h2>Iniciar Campanha</h2>
-                <p>Escolha seu personagem e mundo para entrar na aventura.</p>
-                <div class="form-group">
-                    <label for="personagem_id">Personagem</label>
-                    <select id="personagem_id"></select>
-                </div>
-                <div class="form-group">
-                    <label for="mundo_id">Mundo</label>
-                    <select id="mundo_id"></select>
-                </div>
-                <button class="btn-iniciar-campanha" onclick="criarPersonagem()">Começar Aventura</button>
-                <div id="lista-campanhas-box" style="margin-top:16px;"></div>
-            </div>
-        </div>
-
-        <!-- TELA DO JOGO (CHAT E NARRATIVA) -->
-        <div id="chat-area" style="display:none; flex-direction:column; flex:1; height:100vh; overflow:hidden;">
-            
-            <!-- CABEÇALHO SUPERIOR (SEM CONTADOR DE TURNO) -->
-            <header class="top-bar">
-                <div class="top-bar-left">
-                    <a href="/" class="btn-voltar" title="Voltar ao início">‹</a>
-                    <div class="top-bar-location">
-                        📍 <span id="header-local">Cena inicial</span>
+        <!-- Área Principal -->
+        <main class="game-main">
+            <!-- TELA DE SETUP (Se nenhuma campanha iniciada) -->
+            <div id="personagem-area" class="setup-screen" style="display:none;">
+                <div class="setup-card">
+                    <h2 style="margin:0 0 6px 0; font-size:22px; color:#fff;">Iniciar Campanha</h2>
+                    <p style="margin:0 0 20px 0; color:var(--text-muted); font-size:13.5px;">
+                        Escolha seu personagem e o mundo para entrar na aventura.
+                    </p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="personagem_id">Personagem</label>
+                            <select id="personagem_id" class="select-clean"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="mundo_id">Mundo</label>
+                            <select id="mundo_id" class="select-clean"></select>
+                        </div>
+                        <button class="btn btn-primary" onclick="criarPersonagem()" style="margin-top:10px; width:100%;">
+                            Começar Aventura →
+                        </button>
                     </div>
                 </div>
-                <div class="top-bar-right">
-                    <button class="btn-top-action" id="btn-sincronizar-wiki" onclick="sincronizarWiki()" title="Sincronizar e compilar fatos recentes na Wiki e Fichas">
-                        ⚡ Sincronizar Wiki
-                    </button>
-                    <button class="btn-top-action" id="btn-ficha-top" onclick="abrirFicha()">
-                        📋 Ficha
-                    </button>
-                    <a class="btn-top-action" id="link-wiki-top" href="/">
-                        ✦ Wiki
-                    </a>
-                </div>
-            </header>
-
-            <!-- ÁREA DE STREAM DO CHAT COM SCROLL -->
-            <div class="chat-stream-container" id="chat-scroll-container">
-                <div class="chat-content-width" id="chat">
-                    <!-- Mensagens inseridas via JS -->
-                </div>
             </div>
 
-            <!-- BARRA DE ENTRADA FIXA INFERIOR -->
-            <footer class="bottom-input-bar">
-                <div class="input-box-container">
-                    <textarea 
-                        id="mensagem" 
-                        class="input-textarea" 
-                        placeholder="Enter para enviar. Shift+Enter para quebra de linha."
-                        onkeydown="tratarTeclaInput(event)"
-                    ></textarea>
-                    <div class="input-footer-row">
-                        <div class="input-hint-user">
-                            <span id="label-nome-jogador">Jogador</span>
-                        </div>
-                        <div class="input-actions-right">
-                            <button id="btn-regenerar-rodape" class="btn-regenerar" onclick="regenerarUltimoTurno()" title="Regenerar última resposta da IA" style="display:none;">
-                                🔄 Regenerar
-                            </button>
-                            <a id="link-livro-wiki" class="floating-wiki-btn" href="/" title="Abrir Livro da Campanha">
-                                📖 Livro
-                            </a>
-                            <button id="btn-enviar" class="btn-enviar-acao" onclick="enviarMensagem()">
-                                Enviar ↵
-                            </button>
-                        </div>
+            <!-- TELA DE JOGO / SESSÃO ATIVA -->
+            <div id="chat-area" style="display:none; flex-direction:column; flex:1; height:100vh; overflow:hidden;">
+                <!-- Header Superior da Sessão -->
+                <header class="session-topbar">
+                    <div class="session-location">
+                        <span>📍</span>
+                        <span class="loc-name" id="header-local">Cena inicial</span>
+                    </div>
+                    <div class="app-topbar-actions">
+                        <button class="btn btn-secondary btn-sm" id="btn-sincronizar-wiki" onclick="sincronizarWiki()" title="Sincronizar acontecimentos recentes com a Wiki e Fichas">
+                            ⚡ Sincronizar Wiki
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Stream do Chat -->
+                <div class="chat-stream-container" id="chat-scroll-container">
+                    <div class="chat-content-width" id="chat">
+                        <!-- Mensagens renderizadas aqui -->
                     </div>
                 </div>
-            </footer>
 
-        </div>
-    </main>
-
-    <!-- ─── MODAL DE FICHA COMPLETA ─── -->
-    <div id="modal-ficha" class="modal" onclick="if(event.target===this) fecharFicha()">
-        <div class="modal-content">
-            <span class="modal-close" onclick="fecharFicha()">&times;</span>
-            <h3 id="modal-title">Ficha Completa do Personagem</h3>
-            <pre id="modal-ficha-content"></pre>
-        </div>
+                <!-- Barra de Entrada Flutuante (Estilo Antigravity) -->
+                <footer class="chat-input-wrapper">
+                    <div class="chat-input-box">
+                        <textarea 
+                            id="mensagem" 
+                            class="chat-input-textarea" 
+                            placeholder="Envie uma ação para o Mestre... (Enter para enviar, Shift+Enter para quebra de linha)"
+                            onkeydown="tratarTeclaInput(event)"
+                        ></textarea>
+                        <div class="chat-input-footer">
+                            <div class="chat-input-author">
+                                <span>👤</span> <span id="label-nome-jogador">Jogador</span>
+                            </div>
+                            <div class="chat-input-actions">
+                                <button id="btn-regenerar-rodape" class="btn btn-secondary btn-sm" onclick="regenerarUltimoTurno()" title="Regenerar última resposta do Mestre" style="display:none;">
+                                    🔄 Regenerar
+                                </button>
+                                <button id="btn-enviar" class="btn btn-primary" onclick="enviarMensagem()">
+                                    Enviar ↵
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </main>
     </div>
 
-    <!-- ─── MODAL DE LISTA DE CAMPANHAS ─── -->
-    <div id="modal-campanhas" class="modal" onclick="if(event.target===this) fecharModalCampanhas()">
-        <div class="modal-content" style="max-width:550px;">
-            <span class="modal-close" onclick="fecharModalCampanhas()">&times;</span>
-            <h3>Suas Campanhas Salvas</h3>
-            <div id="lista-campanhas-modal" style="margin-top:14px; display:flex; flex-direction:column; gap:8px;"></div>
+    <!-- ─── MODAL DE FICHA DO JOGADOR (PARTE 2) ─── -->
+    <dialog id="modal-ficha" class="clean-dialog" style="max-width:760px; max-height:88vh;">
+        <div class="dialog-header">
+            <h2 id="modal-title" style="margin:0; font-size:19px; color:#fff;">Ficha do Jogador na Campanha</h2>
+            <div style="display:flex; gap:8px;">
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-modo-ficha" onclick="alternarModoEdicaoFicha()">
+                    ✏️ Editar Ficha
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="fecharFicha()">✕</button>
+            </div>
         </div>
-    </div>
 
+        <!-- MODO VISUALIZAÇÃO COMPLETA -->
+        <div id="ficha-modo-visualizacao">
+            <div id="ficha-conteudo-completo">Carregando ficha...</div>
+        </div>
+
+        <!-- MODO EDIÇÃO ATÔMICA DA CAMPANHA -->
+        <div id="ficha-modo-edicao" style="display:none;">
+            <form id="form-editar-jogador" onsubmit="salvarEdicaoJogadorCampanha(event)">
+                <p style="color:var(--text-muted); font-size:12.5px; margin-top:0; margin-bottom:14px;">
+                    ℹ️ <strong>Atenção:</strong> As alterações feitas aqui afetam SOMENTE esta campanha, preservando o molde reutilizável do personagem intacto.
+                </p>
+
+                <div class="form-grid">
+                    <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:10px;">
+                        <div class="form-group">
+                            <label class="form-label">Nome</label>
+                            <input id="edit-jog-nome" class="input-clean" required maxlength="80">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Idade</label>
+                            <input id="edit-jog-idade" type="number" class="input-clean" min="1" max="200" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Gênero</label>
+                            <input id="edit-jog-genero" class="input-clean" maxlength="40" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Foto do Personagem (URL)</label>
+                        <input id="edit-jog-imagem" class="input-clean" maxlength="2000" placeholder="https://exemplo.com/foto.png">
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div class="form-group">
+                            <label class="form-label">Pontos de Vida (PV Atual)</label>
+                            <input id="edit-jog-pv" type="number" class="input-clean" min="0" max="10000" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Pontos de Vida Máximo (PV Máx)</label>
+                            <input id="edit-jog-pv-max" type="number" class="input-clean" min="1" max="10000" required>
+                        </div>
+                    </div>
+
+                    <div style="background:#15161f; padding:12px; border-radius:var(--radius-sm); border:1px solid var(--border-card);">
+                        <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-faint); margin-bottom:8px;">Atributos Básicos</div>
+                        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;">
+                            <div class="form-group">
+                                <label class="form-label">Força</label>
+                                <input id="edit-jog-atr-forca" type="number" class="input-clean" value="5">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Destreza</label>
+                                <input id="edit-jog-atr-destreza" type="number" class="input-clean" value="5">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Inteligência</label>
+                                <input id="edit-jog-atr-inteligencia" type="number" class="input-clean" value="5">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Carisma</label>
+                                <input id="edit-jog-atr-carisma" type="number" class="input-clean" value="5">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Aparência</label>
+                        <textarea id="edit-jog-aparencia" class="textarea-clean" maxlength="500"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Histórico</label>
+                        <textarea id="edit-jog-historico" class="textarea-clean" maxlength="4000"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Inventário (itens separados por vírgula)</label>
+                        <input id="edit-jog-inventario" class="input-clean" placeholder="espada de ferro, ração de viagem, poção">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Ficha Completa (Markdown / Habilidades / Lore)</label>
+                        <textarea id="edit-jog-ficha-completa" class="textarea-clean" style="min-height:140px; font-family:monospace;" maxlength="20000"></textarea>
+                    </div>
+
+                    <div id="status-salvar-jogador" style="color:var(--accent-yellow); font-size:13px; min-height:18px;"></div>
+                </div>
+
+                <div class="dialog-footer">
+                    <button type="button" class="btn btn-secondary" onclick="alternarModoEdicaoFicha(false)">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-salvar-jog-campanha">Salvar na Campanha</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <script src="/static/sidebar.js"></script>
     <script>
         const CHAVE_STORAGE = 'mestre_campanha_id';
-        const parametrosUrl = new URLSearchParams(window.location.search);
-        const iniciarNova = parametrosUrl.get('nova') === '1';
-        let campanhaId = iniciarNova ? null : (parametrosUrl.get('campanha_id') || localStorage.getItem(CHAVE_STORAGE));
+        let campanhaId = null;
         let estadoAtual = null;
-        let estaGerando = false;
         let catalogoFichas = new Map();
+        let estaGerando = false;
 
         const TIPOS_FICHA = new Set([
             'personagem', 'local', 'item', 'organizacao', 'evento',
@@ -904,12 +581,16 @@
             if (!cid) return;
             try {
                 const resp = await fetch(`/campanhas/${encodeURIComponent(cid)}/catalogo`);
-                if (resp.ok) {
-                    const fichas = await resp.json();
-                    catalogoFichas = new Map(fichas.map(f => [f.id, f]));
+                if (!resp.ok) return;
+                const fichas = await resp.json();
+                catalogoFichas = new Map();
+                if (Array.isArray(fichas)) {
+                    fichas.forEach(f => {
+                        if (f && f.id) catalogoFichas.set(f.id, f);
+                    });
                 }
-            } catch (err) {
-                console.warn('Não foi possível carregar o catálogo de fichas da campanha:', err);
+            } catch (e) {
+                console.warn('Não foi possível carregar o catálogo de fichas da campanha:', e);
             }
         }
 
@@ -919,14 +600,12 @@
                 let res = String(texto);
                 const nome = (nomeJogador && String(nomeJogador).trim()) ? String(nomeJogador).trim() : 'Jogador';
 
-                // 1. Resolver {{user}} mantendo comportamento atual
                 res = res.replace(/\{\{\s*user\s*\}\}/gi, nome);
 
                 const mapa = (mapaFichas instanceof Map)
                     ? mapaFichas
                     : (Array.isArray(mapaFichas) ? new Map(mapaFichas.map(f => [f.id, f])) : new Map());
 
-                // 2. Resolver {{tipo:id:photo}} e {{tipo:id}}
                 const regexPlaceholder = /\{\{\s*([a-zA-Z0-9_]+)\s*:\s*([^}:]+?)\s*(?::\s*([a-zA-Z0-9_]+)\s*)?\}\}/g;
 
                 res = res.replace(regexPlaceholder, (match, tipo, id, modificador) => {
@@ -948,23 +627,19 @@
                         }
                     }
 
-                    // Parte 2 — Placeholder de foto: {{tipo:id:photo}}
                     if (modNorm === 'photo') {
                         if (ficha && ficha.imagem && typeof ficha.imagem === 'string' && ficha.imagem.trim().length > 0) {
                             const src = escapeHtml(ficha.imagem.trim());
                             const alt = escapeHtml(ficha.titulo || idTrim || 'Foto');
                             return `<img class="chat-img" src="${src}" alt="${alt}" onerror="this.style.display='none'">`;
                         }
-                        // Se a ficha não existe OU imagem está vazia, remover silenciosamente
                         return '';
                     }
 
-                    // Parte 1 — Placeholder de título: {{tipo:id}}
                     if (ficha && ficha.titulo) {
                         return ficha.titulo;
                     }
 
-                    // Degradação com segurança se o id não existir no catálogo
                     return idTrim || '[desconhecido]';
                 });
 
@@ -979,25 +654,34 @@
             await carregarPersonagens();
             await carregarMundos();
 
-            if (!campanhaId) {
-                mostrarSetup();
-                return;
+            const parametrosUrl = new URLSearchParams(window.location.search);
+            const campanhaDaUrl = parametrosUrl.get('campanha_id');
+            const novaAventura = parametrosUrl.get('nova');
+
+            if (campanhaDaUrl) {
+                campanhaId = campanhaDaUrl;
+                localStorage.setItem(CHAVE_STORAGE, campanhaId);
+            } else if (!novaAventura) {
+                campanhaId = localStorage.getItem(CHAVE_STORAGE);
             }
 
-            try {
-                const resp = await fetch(`/campanhas/${campanhaId}`);
-                if (!resp.ok) {
-                    localStorage.removeItem(CHAVE_STORAGE);
-                    campanhaId = null;
+            if (campanhaId && !novaAventura) {
+                try {
+                    const resp = await fetch(`/campanhas/${encodeURIComponent(campanhaId)}`);
+                    if (!resp.ok) {
+                        localStorage.removeItem(CHAVE_STORAGE);
+                        mostrarSetup();
+                        return;
+                    }
+                    const estado = await resp.json();
+                    estadoAtual = estado;
+                    await carregarCatalogoCampanha(campanhaId);
+                    mostrarAreaDeChat(estado);
+                } catch (e) {
+                    console.warn('Não foi possível retomar a campanha automaticamente:', e);
                     mostrarSetup();
-                    return;
                 }
-                const estado = await resp.json();
-                estadoAtual = estado;
-                await carregarCatalogoCampanha(campanhaId);
-                mostrarAreaDeChat(estado);
-            } catch (e) {
-                console.warn('Não foi possível retomar a campanha automaticamente:', e);
+            } else {
                 mostrarSetup();
             }
         });
@@ -1008,35 +692,40 @@
         }
 
         async function carregarPersonagens() {
-            const seletor = document.getElementById('personagem_id');
             try {
-                const resposta = await fetch('/api/personagens');
-                if (!resposta.ok) throw new Error();
-                const personagens = await resposta.json();
-                seletor.innerHTML = '<option value="">Escolha um personagem…</option>';
-                personagens.forEach(personagem => {
-                    const opcao = document.createElement('option');
-                    opcao.value = personagem.id;
-                    opcao.textContent = `${personagem.nome} — ${personagem.aparencia}`;
-                    seletor.appendChild(opcao);
-                });
+                const resp = await fetch('/api/personagens');
+                const personagens = await resp.json();
+                const seletor = document.getElementById('personagem_id');
+                seletor.innerHTML = '';
+                const parametrosUrl = new URLSearchParams(window.location.search);
                 const personagemDaUrl = parametrosUrl.get('personagem_id');
+
+                personagens.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = `${p.nome} (${p.genero}, ${p.idade} anos)`;
+                    seletor.appendChild(opt);
+                });
+
                 if (personagemDaUrl && personagens.some(p => p.id === personagemDaUrl)) {
                     seletor.value = personagemDaUrl;
                 }
-                if (!personagens.length) seletor.innerHTML = '<option value="">Nenhum personagem cadastrado</option>';
+                if (!personagens.length) {
+                    seletor.innerHTML = '<option value="">Nenhum personagem cadastrado</option>';
+                }
             } catch (_) {
-                seletor.innerHTML = '<option value="">Não foi possível carregar personagens</option>';
+                document.getElementById('personagem_id').innerHTML = '<option value="">Não foi possível carregar personagens</option>';
             }
         }
 
         async function carregarMundos() {
-            const seletor = document.getElementById('mundo_id');
             try {
-                const resposta = await fetch('/api/mundos');
-                if (!resposta.ok) throw new Error();
-                const mundos = await resposta.json();
-                seletor.innerHTML = '<option value="">Escolha um mundo…</option>';
+                const resp = await fetch('/api/mundos');
+                const mundos = await resp.json();
+                const seletor = document.getElementById('mundo_id');
+                seletor.innerHTML = '';
+                const parametrosUrl = new URLSearchParams(window.location.search);
+
                 mundos.forEach(mundo => {
                     const opcao = document.createElement('option');
                     opcao.value = mundo.id;
@@ -1049,7 +738,7 @@
                 }
                 if (!mundos.length) seletor.innerHTML = '<option value="">Nenhum mundo cadastrado</option>';
             } catch (_) {
-                seletor.innerHTML = '<option value="">Não foi possível carregar mundos</option>';
+                document.getElementById('mundo_id').innerHTML = '<option value="">Não foi possível carregar mundos</option>';
             }
         }
 
@@ -1068,23 +757,32 @@
             card.setAttribute('data-raw', msg.conteudo);
 
             const ehJogador = msg.autor === 'jogador';
-            const nomeAutor = ehJogador ? escapeHtml(msg.nome || 'Jogador') : 'Mestre';
+            const nomeMestre = (estadoAtual?.configuracao_mundo?.nome_mestre || 'Mestre').trim() || 'Mestre';
+            const nomeAutor = ehJogador ? escapeHtml(msg.nome || estadoAtual?.jogador?.nome || 'Jogador') : escapeHtml(nomeMestre);
             const inicial = nomeAutor.charAt(0).toUpperCase();
 
             let avatarHtml = '';
             if (ehJogador) {
-                avatarHtml = `<span>${inicial}</span>`;
+                if (estadoAtual?.jogador?.imagem && estadoAtual.jogador.imagem.trim()) {
+                    avatarHtml = `<img src="${encodeURI(estadoAtual.jogador.imagem.trim())}" alt="${nomeAutor}" class="msg-avatar-img" onerror="this.parentElement.innerHTML='<span>${inicial}</span>'">`;
+                } else {
+                    avatarHtml = `<span>${inicial}</span>`;
+                }
             } else {
-                avatarHtml = `<span style="font-size:18px;">🎲</span>`;
+                if (estadoAtual?.configuracao_mundo?.imagem_mestre && estadoAtual.configuracao_mundo.imagem_mestre.trim()) {
+                    avatarHtml = `<img src="${encodeURI(estadoAtual.configuracao_mundo.imagem_mestre.trim())}" alt="${nomeAutor}" class="msg-avatar-img" onerror="this.parentElement.innerHTML='<span style=\'font-size:18px;\'>🎲</span>'">`;
+                } else {
+                    avatarHtml = `<span style="font-size:18px;">🎲</span>`;
+                }
             }
 
             const badgeHtml = ehJogador 
-                ? `<span class="msg-author-badge">Jogador</span>` 
-                : `<span class="msg-author-badge bot">Mestre</span>`;
+                ? `<span class="msg-author-badge user">Você</span>` 
+                : `<span class="msg-author-badge bot">${nomeAutor}</span>`;
 
             const footerHtml = (ehUltima && !ehJogador) ? `
                 <div class="msg-footer">
-                    <button class="btn-regenerar" onclick="regenerarUltimoTurno()" title="Regenerar resposta">🔄 Regenerar</button>
+                    <button class="btn btn-secondary btn-sm" onclick="regenerarUltimoTurno()" title="Regenerar resposta">🔄 Regenerar</button>
                 </div>
             ` : '';
 
@@ -1121,32 +819,21 @@
             const chatArea = document.getElementById('chat-area');
             chatArea.style.display = 'flex';
 
-            document.getElementById('header-local').textContent = estado.estado.local || 'Aventura';
+            document.getElementById('header-local').textContent = estado.estado?.local || 'Aventura';
 
-            const urlWiki = `/campanhas/${encodeURIComponent(estado.campanha_id)}/wiki`;
-            document.getElementById('link-wiki-top').href = urlWiki;
-            document.getElementById('link-livro-wiki').href = urlWiki;
-            const linkWikiSidebar = document.getElementById('link-wiki-sidebar');
-            linkWikiSidebar.href = urlWiki;
-            linkWikiSidebar.style.display = 'flex';
+            // Atualiza sidebar global via helper do sidebar.js
+            if (window.inicializarSidebar) {
+                inicializarSidebar({ campanhaId: estado.campanha_id });
+            }
+            if (estado.jogador && window.atualizarSidebarJogador) {
+                atualizarSidebarJogador(estado.jogador);
+            }
 
             if (estado.jogador) {
-                document.getElementById('sidebar-card-jogador').style.display = 'block';
-                document.getElementById('sidebar-nome-jogador').textContent = estado.jogador.nome;
-                document.getElementById('sidebar-info-jogador').textContent = estado.jogador.aparencia || 'Personagem';
-                document.getElementById('label-nome-jogador').textContent = estado.jogador.nome;
+                document.getElementById('label-nome-jogador').textContent = estado.jogador.nome || 'Jogador';
             }
 
-            if (estado.jogador.ficha_completa && estado.jogador.ficha_completa.trim().length > 0) {
-                window.fichaAtual = estado.jogador.ficha_completa;
-                document.getElementById('sidebar-btn-ficha').style.display = 'flex';
-                document.getElementById('btn-ficha-top').style.display = 'inline-flex';
-            } else {
-                document.getElementById('sidebar-btn-ficha').style.display = 'none';
-                document.getElementById('btn-ficha-top').style.display = 'none';
-            }
-
-            // Renderizar todo o histórico
+            // Renderizar todo o histórico de mensagens
             const chat = document.getElementById('chat');
             chat.innerHTML = '';
 
@@ -1159,7 +846,7 @@
                 const msgInicial = {
                     id: 'msg_ini',
                     autor: 'mestre',
-                    nome: 'Mestre',
+                    nome: estado.configuracao_mundo?.nome_mestre || 'Mestre',
                     conteudo: primeiraMsg
                 };
                 chat.appendChild(renderizarCardMensagem(msgInicial, true));
@@ -1185,16 +872,21 @@
             btn.style.display = 'inline-flex';
         }
 
-        function mostrarIndicadorDigitando(nomeAutor) {
+        function mostrarIndicadorDigitando() {
             removerIndicadorDigitando();
             const chat = document.getElementById('chat');
-            const autor = 'Mestre';
+            const autor = (estadoAtual?.configuracao_mundo?.nome_mestre || 'Mestre').trim() || 'Mestre';
 
             const wrap = document.createElement('div');
             wrap.className = 'typing-card';
             wrap.id = 'typing-indicator';
 
-            let avatarHtml = `<span style="font-size:18px;">🎲</span>`;
+            let avatarHtml = '';
+            if (estadoAtual?.configuracao_mundo?.imagem_mestre && estadoAtual.configuracao_mundo.imagem_mestre.trim()) {
+                avatarHtml = `<img src="${encodeURI(estadoAtual.configuracao_mundo.imagem_mestre.trim())}" alt="${escapeHtml(autor)}" class="msg-avatar-img" onerror="this.parentElement.innerHTML='<span style=\'font-size:18px;\'>🎲</span>'">`;
+            } else {
+                avatarHtml = `<span style="font-size:18px;">🎲</span>`;
+            }
 
             wrap.innerHTML = `
                 <div class="msg-avatar-wrap">
@@ -1202,11 +894,8 @@
                 </div>
                 <div class="typing-content">
                     <span class="typing-author">${escapeHtml(autor)}</span>
-                    <div class="typing-animation">
-                        <span>digitando</span>
-                        <div class="dots-wave">
-                            <span>.</span><span>.</span><span>.</span><span>.</span>
-                        </div>
+                    <div class="dots-wave">
+                        <span>.</span><span>.</span><span>.</span><span>.</span>
                     </div>
                 </div>
             `;
@@ -1231,8 +920,8 @@
                 <div class="msg-edit-box">
                     <textarea class="msg-edit-textarea" id="edit-textarea-${msgId}">${escapeHtml(raw)}</textarea>
                     <div class="msg-edit-buttons">
-                        <button class="btn-cancelar-edicao" onclick="cancelarEdicao('${msgId}')">Cancelar</button>
-                        <button class="btn-salvar-edicao" onclick="salvarEdicao('${msgId}')">Salvar</button>
+                        <button class="btn btn-secondary btn-sm" onclick="cancelarEdicao('${msgId}')">Cancelar</button>
+                        <button class="btn btn-primary btn-sm" onclick="salvarEdicao('${msgId}')">Salvar</button>
                     </div>
                 </div>
             `;
@@ -1270,26 +959,25 @@
                         body: JSON.stringify({ conteudo: novoTexto })
                     });
                 } catch (e) {
-                    console.warn('Erro ao salvar edição:', e);
+                    console.warn('Erro ao persistir edição no servidor:', e);
                 }
             }
         }
 
         async function apagarMensagemECascata(msgId) {
-            if (!confirm('Deseja apagar esta mensagem e todas as mensagens posteriores? O histórico voltará a este ponto.')) {
+            if (!confirm('Deseja apagar esta mensagem e todas as posteriores?')) {
                 return;
             }
+            if (!campanhaId) return;
 
             try {
                 const resp = await fetch(`/campanhas/${encodeURIComponent(campanhaId)}/mensagens/${encodeURIComponent(msgId)}`, {
                     method: 'DELETE'
                 });
-
                 if (!resp.ok) {
                     alert('Erro ao apagar mensagem.');
                     return;
                 }
-
                 const estado = await resp.json();
                 estadoAtual = estado;
                 mostrarAreaDeChat(estado);
@@ -1299,11 +987,10 @@
         }
 
         async function regenerarUltimoTurno() {
-            if (estaGerando || !campanhaId) return;
+            if (!campanhaId || estaGerando) return;
             estaGerando = true;
-
-            const btnEnviar = document.getElementById('btn-enviar');
-            btnEnviar.disabled = true;
+            const btnRodape = document.getElementById('btn-regenerar-rodape');
+            if (btnRodape) btnRodape.disabled = true;
 
             mostrarIndicadorDigitando();
 
@@ -1311,16 +998,12 @@
                 const resp = await fetch(`/campanhas/${encodeURIComponent(campanhaId)}/regenerar`, {
                     method: 'POST'
                 });
-                const dados = await resp.json();
                 removerIndicadorDigitando();
-
                 if (!resp.ok) {
-                    alert('Erro ao regenerar: ' + (dados.detail || resp.status));
-                    estaGerando = false;
-                    btnEnviar.disabled = false;
+                    alert('Não foi possível regenerar o turno.');
                     return;
                 }
-
+                const dados = await resp.json();
                 estadoAtual = dados.estado;
                 mostrarAreaDeChat(dados.estado);
             } catch (e) {
@@ -1328,24 +1011,22 @@
                 alert('Erro ao regenerar: ' + e.message);
             } finally {
                 estaGerando = false;
-                btnEnviar.disabled = false;
+                if (btnRodape) btnRodape.disabled = false;
             }
         }
 
         async function enviarMensagem() {
-            if (estaGerando || !campanhaId) return;
+            if (estaGerando) return;
 
             const input = document.getElementById('mensagem');
+            const btnEnviar = document.getElementById('btn-enviar');
             const msg = input.value.trim();
             if (!msg) return;
 
-            estaGerando = true;
             input.value = '';
-
-            const btnEnviar = document.getElementById('btn-enviar');
+            estaGerando = true;
             btnEnviar.disabled = true;
 
-            // Insere temporariamente o card do jogador no chat
             const chat = document.getElementById('chat');
             const tempJogadorMsg = {
                 id: 'temp_' + Date.now(),
@@ -1384,27 +1065,194 @@
             }
         }
 
+        /* ─── MODAL DA FICHA DO JOGADOR COMPLETA E EDITÁVEL ─── */
+        let modoEdicaoFicha = false;
+
         function abrirFicha() {
-            if (window.fichaAtual) {
-                document.getElementById('modal-ficha-content').textContent = window.fichaAtual;
-                document.getElementById('modal-ficha').classList.add('active');
-            }
+            if (!estadoAtual || !estadoAtual.jogador) return;
+            modoEdicaoFicha = false;
+            alternarModoEdicaoFicha(false);
+            renderizarVisualizacaoFicha();
+            const modal = document.getElementById('modal-ficha');
+            if (modal) modal.showModal();
         }
+        window.abrirFichaModal = abrirFicha;
 
         function fecharFicha() {
-            document.getElementById('modal-ficha').classList.remove('active');
+            const modal = document.getElementById('modal-ficha');
+            if (modal) modal.close();
         }
 
-        function novaAventura() {
-            if (!confirm('Iniciar uma nova aventura?')) {
-                return;
+        function alternarModoEdicaoFicha(ativar = null) {
+            modoEdicaoFicha = (ativar !== null) ? ativar : !modoEdicaoFicha;
+            const viewEl = document.getElementById('ficha-modo-visualizacao');
+            const editEl = document.getElementById('ficha-modo-edicao');
+            const btnToggle = document.getElementById('btn-toggle-modo-ficha');
+
+            if (modoEdicaoFicha) {
+                viewEl.style.display = 'none';
+                editEl.style.display = 'block';
+                btnToggle.textContent = '👁️ Visualizar';
+                preencherFormularioEdicaoJogador();
+            } else {
+                viewEl.style.display = 'block';
+                editEl.style.display = 'none';
+                btnToggle.textContent = '✏️ Editar Ficha';
+                renderizarVisualizacaoFicha();
             }
-            localStorage.removeItem(CHAVE_STORAGE);
-            campanhaId = null;
-            document.getElementById('chat-area').style.display = 'none';
-            document.getElementById('personagem-area').style.display = 'flex';
-            document.getElementById('chat').innerHTML = '';
-            history.replaceState({}, '', '/jogo?nova=1');
+        }
+
+        function renderizarVisualizacaoFicha() {
+            const j = estadoAtual?.jogador;
+            if (!j) return;
+            const container = document.getElementById('ficha-conteudo-completo');
+
+            const fotoHtml = j.imagem && j.imagem.trim()
+                ? `<div style="flex-shrink:0;"><img src="${encodeURI(j.imagem.trim())}" alt="${escapeHtml(j.nome)}" style="width:100px; height:100px; object-fit:cover; border-radius:8px; border:1px solid var(--border-subtle);" onerror="this.style.display='none'"></div>`
+                : '';
+
+            const inventarioHtml = (j.inventario || []).length > 0
+                ? (j.inventario.map(it => `<span style="font-size:12px; padding:3px 8px; border-radius:999px; background:#212330; border:1px solid var(--border-card); color:#ccd;">${escapeHtml(it)}</span>`).join(' '))
+                : '<span style="color:var(--text-faint);">Vazio</span>';
+
+            const atributos = j.atributos || {};
+            const atrHtml = `
+                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; background:#161720; padding:12px; border-radius:6px; border:1px solid var(--border-card); margin-top:8px;">
+                    <div style="text-align:center;"><span style="color:var(--text-faint); font-size:11px; text-transform:uppercase;">Força</span><div style="font-size:16px; font-weight:700; color:#fff;">${atributos.forca ?? 5}</div></div>
+                    <div style="text-align:center;"><span style="color:var(--text-faint); font-size:11px; text-transform:uppercase;">Destreza</span><div style="font-size:16px; font-weight:700; color:#fff;">${atributos.destreza ?? 5}</div></div>
+                    <div style="text-align:center;"><span style="color:var(--text-faint); font-size:11px; text-transform:uppercase;">Inteligência</span><div style="font-size:16px; font-weight:700; color:#fff;">${atributos.inteligencia ?? 5}</div></div>
+                    <div style="text-align:center;"><span style="color:var(--text-faint); font-size:11px; text-transform:uppercase;">Carisma</span><div style="font-size:16px; font-weight:700; color:#fff;">${atributos.carisma ?? 5}</div></div>
+                </div>
+            `;
+
+            let estruturadaHtml = '';
+            if (j.ficha_estruturada && Object.keys(j.ficha_estruturada).length > 0) {
+                estruturadaHtml = '<div style="margin-top:14px;"><div style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--text-faint); margin-bottom:6px;">Seções da Ficha Estruturada</div>';
+                for (const [secao, txt] of Object.entries(j.ficha_estruturada)) {
+                    estruturadaHtml += `<div style="margin-bottom:8px; background:#15161f; padding:8px 12px; border-radius:6px; border:1px solid var(--border-card);"><strong style="color:var(--accent-yellow); font-size:13px;">${escapeHtml(secao)}</strong><div style="font-size:13px; color:var(--text-muted); white-space:pre-wrap; margin-top:4px;">${escapeHtml(txt)}</div></div>`;
+                }
+                estruturadaHtml += '</div>';
+            }
+
+            container.innerHTML = `
+                <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:16px;">
+                    ${fotoHtml}
+                    <div style="flex:1;">
+                        <h2 style="margin:0 0 6px 0; font-size:22px; color:#fff;">${escapeHtml(j.nome)}</h2>
+                        <div style="color:var(--text-muted); font-size:13.5px; margin-bottom:8px;">
+                            ${j.idade ? `${j.idade} anos` : ''} ${j.genero ? `• ${escapeHtml(j.genero)}` : ''}
+                        </div>
+                        <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 10px; border-radius:999px; background:rgba(233,69,96,0.12); border:1px solid rgba(233,69,96,0.3); color:#ff7b90; font-size:13px; font-weight:600;">
+                            ❤️ PV: ${j.pv ?? 20} / ${j.pv_max ?? 20}
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <div>
+                        <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-faint); letter-spacing:0.5px;">Atributos</div>
+                        ${atrHtml}
+                    </div>
+
+                    <div>
+                        <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-faint); letter-spacing:0.5px; margin-bottom:4px;">Aparência</div>
+                        <div style="color:var(--text-main); font-size:13.5px; line-height:1.5;">${escapeHtml(j.aparencia || 'Sem descrição')}</div>
+                    </div>
+
+                    <div>
+                        <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-faint); letter-spacing:0.5px; margin-bottom:4px;">Histórico</div>
+                        <div style="color:var(--text-muted); font-size:13.5px; line-height:1.5;">${escapeHtml(j.historico || 'Sem histórico registrado')}</div>
+                    </div>
+
+                    <div>
+                        <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-faint); letter-spacing:0.5px; margin-bottom:6px;">Inventário</div>
+                        <div style="display:flex; flex-wrap:wrap; gap:6px;">${inventarioHtml}</div>
+                    </div>
+
+                    ${estruturadaHtml}
+
+                    ${j.ficha_completa ? `
+                        <div style="margin-top:8px;">
+                            <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-faint); letter-spacing:0.5px; margin-bottom:6px;">Ficha Completa (Texto Livre)</div>
+                            <pre style="background:#13141b; border:1px solid var(--border-card); border-radius:6px; padding:14px; color:var(--text-main); font-size:12.5px; line-height:1.5; white-space:pre-wrap; max-height:240px; overflow-y:auto; font-family:inherit;">${escapeHtml(j.ficha_completa)}</pre>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function preencherFormularioEdicaoJogador() {
+            const j = estadoAtual?.jogador;
+            if (!j) return;
+            document.getElementById('edit-jog-nome').value = j.nome || '';
+            document.getElementById('edit-jog-idade').value = j.idade || 20;
+            document.getElementById('edit-jog-genero').value = j.genero || '';
+            document.getElementById('edit-jog-imagem').value = j.imagem || '';
+            document.getElementById('edit-jog-pv').value = j.pv ?? 20;
+            document.getElementById('edit-jog-pv-max').value = j.pv_max ?? 20;
+            
+            const atr = j.atributos || {};
+            document.getElementById('edit-jog-atr-forca').value = atr.forca ?? 5;
+            document.getElementById('edit-jog-atr-destreza').value = atr.destreza ?? 5;
+            document.getElementById('edit-jog-atr-inteligencia').value = atr.inteligencia ?? 5;
+            document.getElementById('edit-jog-atr-carisma').value = atr.carisma ?? 5;
+
+            document.getElementById('edit-jog-aparencia').value = j.aparencia || '';
+            document.getElementById('edit-jog-historico').value = j.historico || '';
+            document.getElementById('edit-jog-inventario').value = (j.inventario || []).join(', ');
+            document.getElementById('edit-jog-ficha-completa').value = j.ficha_completa || '';
+            document.getElementById('status-salvar-jogador').textContent = '';
+        }
+
+        async function salvarEdicaoJogadorCampanha(e) {
+            e.preventDefault();
+            if (!campanhaId) return;
+            const btnSalvar = document.getElementById('btn-salvar-jog-campanha');
+            const statusEl = document.getElementById('status-salvar-jogador');
+            btnSalvar.disabled = true;
+            btnSalvar.textContent = 'Salvando...';
+
+            const payload = {
+                nome: document.getElementById('edit-jog-nome').value.trim(),
+                idade: Number(document.getElementById('edit-jog-idade').value),
+                genero: document.getElementById('edit-jog-genero').value.trim(),
+                imagem: document.getElementById('edit-jog-imagem').value.trim(),
+                pv: Number(document.getElementById('edit-jog-pv').value),
+                pv_max: Number(document.getElementById('edit-jog-pv-max').value),
+                atributos: {
+                    forca: Number(document.getElementById('edit-jog-atr-forca').value),
+                    destreza: Number(document.getElementById('edit-jog-atr-destreza').value),
+                    inteligencia: Number(document.getElementById('edit-jog-atr-inteligencia').value),
+                    carisma: Number(document.getElementById('edit-jog-atr-carisma').value)
+                },
+                aparencia: document.getElementById('edit-jog-aparencia').value.trim(),
+                historico: document.getElementById('edit-jog-historico').value.trim(),
+                inventario: document.getElementById('edit-jog-inventario').value.split(',').map(s => s.trim()).filter(Boolean),
+                ficha_completa: document.getElementById('edit-jog-ficha-completa').value.trim()
+            };
+
+            try {
+                const resp = await fetch(`/campanhas/${encodeURIComponent(campanhaId)}/jogador`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    statusEl.textContent = err.detail || 'Erro ao salvar alterações.';
+                    return;
+                }
+
+                estadoAtual = await resp.json();
+                mostrarAreaDeChat(estadoAtual);
+                alternarModoEdicaoFicha(false);
+            } catch (err) {
+                statusEl.textContent = 'Erro de rede: ' + err.message;
+            } finally {
+                btnSalvar.disabled = false;
+                btnSalvar.textContent = 'Salvar na Campanha';
+            }
         }
 
         function escapeHtml(str) {
@@ -1435,14 +1283,12 @@
                     return `<div class="chat-img-wrap"><img src="${src}" alt="${alt}" class="chat-img" onerror="this.parentElement.style.display='none'"></div>`;
                 }
 
-                // Protege tags <img> geradas por resolverPlaceholders (:photo) para não serem escapadas por escapeHtml
                 const tagsImg = [];
                 texto = texto.replace(/<img\b[^>]*>/gi, (imgTag) => {
                     tagsImg.push(imgTag);
                     return `__SAFE_IMG_TOKEN_${tagsImg.length - 1}__`;
                 });
 
-                // Se o bloco inteiro contiver exclusivamente uma imagem
                 if (tagsImg.length === 1 && texto.trim() === '__SAFE_IMG_TOKEN_0__') {
                     return `<div class="chat-img-wrap">${tagsImg[0]}</div>`;
                 }
@@ -1453,62 +1299,18 @@
                     return `<div class="chat-img-wrap"><img src="${src}" alt="${alt}" class="chat-img" onerror="this.parentElement.style.display='none'"></div>`;
                 });
 
-                // Pensamentos ou janelas em backticks: `pensamento`
                 seguro = seguro.replace(/`([^`]+)`/g, '<span class="pensamento">$1</span>');
-
-                // Negrito: **texto**
                 seguro = seguro.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
-
-                // Ações / descrições em itálico entre asteriscos: *ação*
                 seguro = seguro.replace(/\*([^\*]+)\*/g, '<em>$1</em>');
-
-                // Falas entre aspas: "fala"
                 seguro = seguro.replace(/"([^"]+)"/g, '<span class="fala">&ldquo;$1&rdquo;</span>');
-
-                // Quebras de linha simples dentro do parágrafo
                 seguro = seguro.replace(/\n/g, '<br>');
 
-                // Restaura as tags <img> protegidas
                 tagsImg.forEach((imgTag, i) => {
                     seguro = seguro.replace(`__SAFE_IMG_TOKEN_${i}__`, imgTag);
                 });
 
                 return `<p class="narrativa-paragrafo">${seguro}</p>`;
             }).join('');
-        }
-
-        async function alternarListaCampanhas() {
-            const modal = document.getElementById('modal-campanhas');
-            const lista = document.getElementById('lista-campanhas-modal');
-            modal.classList.add('active');
-            lista.innerHTML = 'Carregando campanhas...';
-            try {
-                const resp = await fetch('/campanhas');
-                const campanhas = await resp.json();
-                if (!campanhas.length) {
-                    lista.innerHTML = '<i>Nenhuma campanha salva ainda.</i>';
-                    return;
-                }
-                lista.innerHTML = '';
-                campanhas.forEach(c => {
-                    const item = document.createElement('div');
-                    item.className = 'nav-item';
-                    item.style.border = '1px solid #244b77';
-                    item.style.justifyContent = 'space-between';
-                    item.innerHTML = `<span><strong>${escapeHtml(c.nome_jogador)}</strong> — ${escapeHtml(c.local)}</span><span style="color:#8fd694;">retomar →</span>`;
-                    item.onclick = () => {
-                        fecharModalCampanhas();
-                        retomarCampanha(c.campanha_id);
-                    };
-                    lista.appendChild(item);
-                });
-            } catch (e) {
-                lista.innerHTML = 'Erro ao carregar campanhas: ' + e.message;
-            }
-        }
-
-        function fecharModalCampanhas() {
-            document.getElementById('modal-campanhas').classList.remove('active');
         }
 
         async function retomarCampanha(id) {
@@ -1577,17 +1379,12 @@
                 await carregarCatalogoCampanha(campanhaId);
                 mostrarAreaDeChat(dados.estado);
 
-                let msgSucesso = `✨ Sincronização Canônica Concluída!
-
-${dados.resumo_alteracoes}`;
+                let msgSucesso = `✨ Sincronização Canônica Concluída!\n\n${dados.resumo_alteracoes}`;
                 if (dados.fichas_atualizadas && dados.fichas_atualizadas.length > 0) {
-                    msgSucesso += `
-
-Fichas Atualizadas: ${dados.fichas_atualizadas.join(', ')}`;
+                    msgSucesso += `\n\nFichas Atualizadas: ${dados.fichas_atualizadas.join(', ')}`;
                 }
                 if (dados.fichas_novas && dados.fichas_novas.length > 0) {
-                    msgSucesso += `
-Fichas Criadas: ${dados.fichas_novas.join(', ')}`;
+                    msgSucesso += `\nFichas Criadas: ${dados.fichas_novas.join(', ')}`;
                 }
                 alert(msgSucesso);
             } catch (e) {

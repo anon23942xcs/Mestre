@@ -3,240 +3,113 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mestre — Campanhas</title>
+  <title>Mestre — Início</title>
+  <link rel="stylesheet" href="/static/shared.css">
   <style>
-    :root { color-scheme: dark; }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Arial, sans-serif;
-      background: #1a1a2e;
-      color: #eee;
-    }
-    header {
-      padding: 38px max(24px, calc((100vw - 1180px) / 2));
-      background: #16213e;
-      border-bottom: 1px solid #345;
-    }
-    h1 { margin: 0; color: #e94560; font-size: 28px; }
-    header p { margin: 6px 0 0; color: #b8b8d1; font-size: 15px; }
-    main { max-width: 1180px; margin: 0 auto; padding: 28px 24px 60px; }
-    .topo {
-      display: flex;
-      gap: 16px;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 22px;
-    }
-    .topo h2 { margin: 0; font-size: 22px; color: #fff; }
-    .botao, .acao {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 0;
-      border-radius: 6px;
-      padding: 10px 16px;
-      color: white;
-      background: #e94560;
-      text-decoration: none;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: bold;
-      transition: background 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
-    }
-    .botao:hover, .acao:hover { background: #d33a53; }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
-    }
-    .ficha-card {
-      display: flex;
-      flex-direction: column;
-      min-height: 230px;
-      padding: 24px;
-      background: #0f3460;
-      border: 1px solid #244b77;
-      border-radius: 14px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-    .ficha-card:hover {
-      border-color: #e94560;
-      transform: translateY(-4px);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
-    }
-    .card-link {
-      color: inherit;
-      text-decoration: none;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    .card-link small {
-      color: #f4d35e;
-      font-size: 11.5px;
-      font-weight: bold;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin-bottom: 6px;
-    }
-    .card-link h2 {
-      margin: 0 0 10px 0;
-      font-size: 22px;
-      font-weight: 700;
-      color: #ffffff;
-      line-height: 1.25;
-    }
-    .card-link p {
-      color: #b8b8d1;
-      font-size: 13.5px;
-      line-height: 1.5;
-      margin: 0;
-    }
     .seletor-bloco {
-      margin-top: 16px;
-      padding: 12px 14px;
-      background: #16213e;
-      border-radius: 8px;
-      border: 1px solid #244b77;
+      margin-top: 14px;
+      padding: 12px;
+      background: #14151c;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-card);
       display: flex;
       flex-direction: column;
-      gap: 8px;
-    }
-    .seletor-label {
-      font-size: 12px;
-      color: #b8b8d1;
-      font-weight: bold;
-    }
-    .seletor-personagem {
-      width: 100%;
-      padding: 9px 12px;
-      background: #0f3460;
-      color: #ffffff;
-      border: 1px solid #345;
-      border-radius: 6px;
-      font-size: 14px;
-      font-family: inherit;
-      cursor: pointer;
-    }
-    .seletor-personagem:focus {
-      outline: none;
-      border-color: #e94560;
-    }
-    .acoes {
-      display: flex;
-      gap: 10px;
-      margin-top: 16px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .acao.secundaria {
-      background: transparent;
-      color: #8fd694;
-      border: 1px solid #8fd694;
-    }
-    .acao.secundaria:hover {
-      background: rgba(143, 214, 148, 0.12);
-    }
-    .acao.perigo {
-      background: transparent;
-      color: #ffabb5;
-      border: 1px solid #e94560;
-    }
-    .acao.perigo:hover {
-      background: rgba(233, 69, 96, 0.16);
-      color: #fff;
-    }
-    .vazio, .erro {
-      padding: 24px;
-      border-radius: 10px;
-      background: #16213e;
-      color: #b8b8d1;
-      border: 1px solid #244b77;
-    }
-    .erro { color: #ffabb5; border-color: #e94560; }
-    @media (max-width: 560px) {
-      .topo { align-items: flex-start; flex-direction: column; }
+      gap: 6px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Mestre</h1>
-    <p>Escolha uma campanha ou comece uma nova aventura.</p>
-  </header>
-  <main>
-    <div class="topo">
-      <h2>Seus mundos</h2>
-      <div class="acoes">
-        <a class="acao secundaria" href="/personagens">Meus personagens</a>
-        <a class="botao" href="/mundos">Criar mundo</a>
-      </div>
-    </div>
-    <div id="mundos" class="grid" aria-live="polite">Carregando mundos…</div>
+  <div class="app-layout">
+    <!-- Sidebar Unificada Geral -->
+    <aside id="app-sidebar" class="app-sidebar"></aside>
 
-    <div class="topo" style="margin-top:40px;">
-      <h2>Suas campanhas</h2>
-    </div>
-    <div id="campanhas" class="grid" aria-live="polite">Carregando campanhas…</div>
-  </main>
+    <main class="app-main">
+      <header class="app-topbar">
+        <div class="app-topbar-title">
+          <span>🏠</span> Painel Principal
+        </div>
+        <div class="app-topbar-actions">
+          <a class="btn btn-secondary btn-sm" href="/personagens">👤 Meus Personagens</a>
+          <a class="btn btn-primary btn-sm" href="/mundos">+ Novo Mundo</a>
+        </div>
+      </header>
+
+      <div class="app-container">
+        <!-- Seção: Seus Mundos -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div>
+            <h2 style="margin:0; font-size:20px; color:#fff;">Mundos Disponíveis</h2>
+            <p style="margin:4px 0 0; color:var(--text-muted); font-size:13px;">Escolha um mundo canônico e um personagem para iniciar uma campanha.</p>
+          </div>
+          <a class="btn btn-secondary btn-sm" href="/mundos">Gerenciar Mundos →</a>
+        </div>
+        <div id="mundos" class="grid-cards" aria-live="polite">Carregando mundos…</div>
+
+        <!-- Seção: Campanhas em Andamento -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:40px; margin-bottom:16px;">
+          <div>
+            <h2 style="margin:0; font-size:20px; color:#fff;">Campanhas em Andamento</h2>
+            <p style="margin:4px 0 0; color:var(--text-muted); font-size:13px;">Continue suas sessões anteriores de onde parou.</p>
+          </div>
+        </div>
+        <div id="campanhas" class="grid-cards" aria-live="polite">Carregando campanhas…</div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/sidebar.js"></script>
   <script>
     let mundos = [];
-    let campanhas = [];
     let personagens = [];
+    let campanhas = [];
 
-    function texto(valor) { return valor == null ? '' : String(valor); }
-    function escapar(valor) {
+    const escapar = valor => {
       const el = document.createElement('span');
-      el.textContent = texto(valor);
+      el.textContent = valor == null ? '' : String(valor);
       return el.innerHTML;
-    }
+    };
 
     function resumo(campanha) {
-      const lugar = campanha.local ? `Em ${campanha.local}` : 'Aventura em andamento';
-      return `${lugar} · turno ${campanha.turno ?? 0}`;
-    }
-
-    function encontrarCampanha(mundoId, personagemId) {
-      return campanhas.find(c => {
-        if (c.mundo_id !== mundoId) return false;
-        if (c.personagem_id && c.personagem_id === personagemId) return true;
-        const p = personagens.find(item => item.id === personagemId);
-        return p && c.nome_jogador === p.nome;
-      });
+      if (!campanha) return 'Sem informações';
+      const jogador = campanha.nome_jogador ? `Personagem: ${campanha.nome_jogador}` : 'Personagem sem nome';
+      const local = campanha.local ? `Local: ${campanha.local}` : 'Local não informado';
+      return `${jogador} • ${local}`;
     }
 
     function atualizarBotaoMundo(mundoId) {
-      const select = document.getElementById(`select-mundo-${mundoId}`);
-      const btn = document.getElementById(`btn-jogar-${mundoId}`);
+      const select = document.getElementById(`sel-pers-${mundoId}`);
+      const btn = document.getElementById(`btn-acao-${mundoId}`);
       if (!select || !btn) return;
-      const personagemId = select.value;
-      const campanhaExistente = encontrarCampanha(mundoId, personagemId);
+
+      const persId = select.value;
+      const campanhaExistente = campanhas.find(c => c.mundo_id === mundoId && c.personagem_id === persId);
+
       if (campanhaExistente) {
-        btn.textContent = 'Continuar campanha';
+        btn.textContent = 'Continuar Jogo →';
+        btn.className = 'btn btn-primary btn-sm';
+        btn.dataset.modo = 'continuar';
         btn.dataset.campanhaId = campanhaExistente.campanha_id;
-        btn.dataset.acao = 'continuar';
       } else {
-        btn.textContent = 'Iniciar nova campanha';
+        btn.textContent = 'Iniciar Nova Campanha';
+        btn.className = 'btn btn-outline-green btn-sm';
+        btn.dataset.modo = 'iniciar';
         delete btn.dataset.campanhaId;
-        btn.dataset.acao = 'iniciar';
       }
     }
 
-    async function executarAcaoMundo(mundoId) {
-      const select = document.getElementById(`select-mundo-${mundoId}`);
-      const btn = document.getElementById(`btn-jogar-${mundoId}`);
+    async function acaoBotaoMundo(mundoId) {
+      const select = document.getElementById(`sel-pers-${mundoId}`);
+      const btn = document.getElementById(`btn-acao-${mundoId}`);
       if (!select || !btn) return;
 
       const personagemId = select.value;
       if (!personagemId) {
-        alert('Por favor, selecione ou crie um personagem primeiro.');
+        alert('Selecione ou crie um personagem antes de iniciar a campanha.');
         return;
       }
 
-      if (btn.dataset.acao === 'continuar' && btn.dataset.campanhaId) {
+      if (btn.dataset.modo === 'continuar' && btn.dataset.campanhaId) {
+        localStorage.setItem('mestre_campanha_id', btn.dataset.campanhaId);
         window.location.href = `/jogo?campanha_id=${encodeURIComponent(btn.dataset.campanhaId)}`;
         return;
       }
@@ -257,6 +130,7 @@
           throw new Error('Não foi possível iniciar a campanha.');
         }
         const estado = await resposta.json();
+        localStorage.setItem('mestre_campanha_id', estado.campanha_id);
         window.location.href = `/jogo?campanha_id=${encodeURIComponent(estado.campanha_id)}`;
       } catch (err) {
         alert(err.message || 'Erro ao iniciar campanha.');
@@ -266,29 +140,22 @@
     }
 
     async function apagarCampanha(campanhaId, elementoBotao) {
-      if (!confirm('Deseja realmente apagar esta campanha?')) {
-        return;
-      }
+      if (!confirm('Deseja realmente apagar esta campanha?')) return;
       try {
         const resposta = await fetch(`/campanhas/${encodeURIComponent(campanhaId)}`, {
           method: 'DELETE'
         });
         if (!resposta.ok) throw new Error('Não foi possível apagar a campanha.');
 
-        // Remover do array local
         campanhas = campanhas.filter(c => c.campanha_id !== campanhaId);
-
-        // Remover o card da lista
-        const card = elementoBotao.closest('.ficha-card');
+        const card = elementoBotao.closest('.clean-card');
         if (card) card.remove();
 
         const areaCampanhas = document.getElementById('campanhas');
         if (!campanhas.length) {
-          areaCampanhas.className = 'vazio';
-          areaCampanhas.textContent = 'Ainda não há campanhas. Crie a primeira aventura para começar.';
+          areaCampanhas.innerHTML = '<div style="grid-column:1/-1; padding:24px; background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-md); color:var(--text-muted); text-align:center;">Nenhuma campanha ativa no momento.</div>';
         }
 
-        // Atualizar os botões dos mundos
         mundos.forEach(m => atualizarBotaoMundo(m.id));
       } catch (err) {
         alert(err.message || 'Erro ao apagar campanha.');
@@ -298,39 +165,37 @@
     function renderizarCampanhas() {
       const area = document.getElementById('campanhas');
       if (!campanhas.length) {
-        area.className = 'vazio';
-        area.textContent = 'Ainda não há campanhas. Crie a primeira aventura para começar.';
+        area.innerHTML = '<div style="grid-column:1/-1; padding:24px; background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-md); color:var(--text-muted); text-align:center;">Nenhuma campanha ativa no momento.</div>';
         return;
       }
-      area.className = 'grid';
-      area.innerHTML = campanhas.map(campanha => {
-        const id = encodeURIComponent(campanha.campanha_id);
+
+      area.innerHTML = campanhas.map(c => {
+        const id = encodeURIComponent(c.campanha_id);
         const wiki = `/campanhas/${id}/wiki`;
-        const mundo = campanha.mundo || 'Mundo não identificado';
-        return `<article class="ficha-card">
-          <a class="card-link" href="${wiki}" aria-label="Ver mundo de ${escapar(campanha.nome_jogador)}">
-            <small>${escapar(mundo)}</small>
-            <h2>${escapar(campanha.nome_jogador || 'Sem nome')}</h2>
-            <p>${escapar(resumo(campanha))}</p>
-          </a>
-          <div class="acoes">
-            <a class="acao" href="/jogo?campanha_id=${id}">Jogar</a>
-            <a class="acao secundaria" href="${wiki}">Ver mundo</a>
-            <button type="button" class="acao perigo" onclick="apagarCampanha('${escapar(campanha.campanha_id)}', this)">Apagar</button>
-          </div>
-        </article>`;
+        const mundo = c.mundo || 'Mundo não identificado';
+
+        return `
+          <article class="clean-card">
+            <div class="clean-card-badge">${escapar(mundo)}</div>
+            <h3 class="clean-card-title">${escapar(c.nome_jogador || 'Sem nome')}</h3>
+            <p class="clean-card-desc">📍 <strong>Local:</strong> ${escapar(c.local || 'Inicial')}\n<strong>Jogador:</strong> ${escapar(c.nome_jogador)}</p>
+            <div class="clean-card-actions">
+              <a class="btn btn-primary btn-sm" href="/jogo?campanha_id=${id}">Jogar</a>
+              <a class="btn btn-secondary btn-sm" href="${wiki}">Wiki</a>
+              <button type="button" class="btn btn-danger btn-sm" onclick="apagarCampanha('${escapar(c.campanha_id)}', this)">🗑️</button>
+            </div>
+          </article>
+        `;
       }).join('');
     }
 
     function renderizarMundos() {
       const area = document.getElementById('mundos');
       if (!mundos.length) {
-        area.className = 'vazio';
-        area.textContent = 'Ainda não há mundos. Crie um molde para começar.';
+        area.innerHTML = '<div style="grid-column:1/-1; padding:24px; background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-md); color:var(--text-muted); text-align:center;">Nenhum mundo criado ainda. Clique em "+ Novo Mundo" para criar.</div>';
         return;
       }
 
-      // Personagens ordenados por data de criação mais recente primeiro
       const personagensPorData = [...personagens].sort((a, b) => {
         const dataA = a.data_criacao || '';
         const dataB = b.data_criacao || '';
@@ -338,81 +203,78 @@
       });
       const maisRecenteId = personagensPorData[0]?.id || '';
 
-      area.className = 'grid';
       area.innerHTML = mundos.map(mundo => {
         const wikiUrl = `/mundos/${encodeURIComponent(mundo.id)}/wiki`;
-        
-        // Verificar se existe campanha prévia deste mundo
         const campMundo = campanhas.find(c => c.mundo_id === mundo.id);
         let idPreselecionado = maisRecenteId;
-        if (campMundo) {
-          if (campMundo.personagem_id && personagens.some(p => p.id === campMundo.personagem_id)) {
-            idPreselecionado = campMundo.personagem_id;
-          } else {
-            const p = personagens.find(item => item.nome === campMundo.nome_jogador);
-            if (p) idPreselecionado = p.id;
-          }
+        if (campMundo && campMundo.personagem_id && personagens.some(p => p.id === campMundo.personagem_id)) {
+          idPreselecionado = campMundo.personagem_id;
         }
 
-        const temPersonagens = personagens.length > 0;
-        const opcoesPersonagens = temPersonagens
-          ? personagens.map(p => `<option value="${escapar(p.id)}"${p.id === idPreselecionado ? ' selected' : ''}>${escapar(p.nome)}</option>`).join('')
-          : '<option value="">Nenhum personagem cadastrado</option>';
+        let opcoesPersonagens = '';
+        if (personagens.length > 0) {
+          opcoesPersonagens = personagens.map(p => {
+            const sel = p.id === idPreselecionado ? ' selected' : '';
+            return `<option value="${escapar(p.id)}"${sel}>${escapar(p.nome)} (${escapar(p.genero)}, ${p.idade}a)</option>`;
+          }).join('');
+        } else {
+          opcoesPersonagens = '<option value="">Nenhum personagem criado</option>';
+        }
 
-        return `<article class="ficha-card">
-          <a class="card-link" href="${wikiUrl}">
-            <small>Mundo</small>
-            <h2>${escapar(mundo.nome)}</h2>
-            <p>${escapar(mundo.descricao || mundo.configuracao?.cenario || 'Sem descrição')}</p>
-          </a>
-          
-          <div class="seletor-bloco">
-            <label class="seletor-label" for="select-mundo-${escapar(mundo.id)}">Interpretando como</label>
-            ${temPersonagens
-              ? `<select id="select-mundo-${escapar(mundo.id)}" class="seletor-personagem" onchange="atualizarBotaoMundo('${escapar(mundo.id)}')">
-                  ${opcoesPersonagens}
-                 </select>`
-              : `<div style="font-size:13px;color:#b8b8d1;">Crie um personagem antes de jogar. <a href="/personagens" style="color:#8fd694;text-decoration:underline;">Criar personagem</a></div>`
-            }
-          </div>
+        const c = mundo.configuracao || {};
+        const capaImg = c.imagem_mestre && c.imagem_mestre.trim()
+          ? `<img class="clean-card-img" src="${escapar(c.imagem_mestre.trim())}" alt="${escapar(mundo.nome)}" onerror="this.style.display='none'">`
+          : '';
 
-          <div class="acoes">
-            ${temPersonagens
-              ? `<button type="button" id="btn-jogar-${escapar(mundo.id)}" class="acao" onclick="executarAcaoMundo('${escapar(mundo.id)}')">Iniciar nova campanha</button>`
-              : `<a class="acao" href="/personagens">Criar personagem</a>`
-            }
-            <a class="acao secundaria" href="${wikiUrl}">Editar mundo</a>
-          </div>
-        </article>`;
+        const nomeMestreStr = c.nome_mestre ? ` • Mestre: ${escapar(c.nome_mestre)}` : '';
+
+        return `
+          <article class="clean-card">
+            ${capaImg}
+            <div class="clean-card-badge">Mundo${nomeMestreStr}</div>
+            <h3 class="clean-card-title">${escapar(mundo.nome)}</h3>
+            <p class="clean-card-desc">${escapar(mundo.descricao || c.cenario || 'Sem descrição.')}</p>
+            
+            <div class="seletor-bloco">
+              <label class="form-label" for="sel-pers-${escapar(mundo.id)}">Personagem para a aventura:</label>
+              <select class="select-clean" id="sel-pers-${escapar(mundo.id)}" onchange="atualizarBotaoMundo('${escapar(mundo.id)}')">
+                ${opcoesPersonagens}
+              </select>
+            </div>
+
+            <div class="clean-card-actions">
+              <button type="button" class="btn btn-primary btn-sm" id="btn-acao-${escapar(mundo.id)}" onclick="acaoBotaoMundo('${escapar(mundo.id)}')">
+                Iniciar Campanha
+              </button>
+              <a class="btn btn-secondary btn-sm" href="${wikiUrl}">📖 Fichas / Wiki</a>
+            </div>
+          </article>
+        `;
       }).join('');
 
-      // Inicializa os textos dos botões
       mundos.forEach(m => atualizarBotaoMundo(m.id));
     }
 
-    async function carregarTudo() {
+    async function inicializar() {
       try {
-        const [resMundos, resCampanhas, resPersonagens] = await Promise.all([
+        const [resMundos, resCampanhas, resPers] = await Promise.all([
           fetch('/api/mundos'),
           fetch('/campanhas'),
           fetch('/api/personagens')
         ]);
 
-        if (resMundos.ok) mundos = await resMundos.json();
-        if (resCampanhas.ok) campanhas = await resCampanhas.json();
-        if (resPersonagens.ok) personagens = await resPersonagens.json();
+        mundos = resMundos.ok ? await resMundos.json() : [];
+        campanhas = resCampanhas.ok ? await resCampanhas.json() : [];
+        personagens = resPers.ok ? await resPers.json() : [];
 
         renderizarMundos();
         renderizarCampanhas();
       } catch (err) {
-        document.getElementById('mundos').className = 'erro';
-        document.getElementById('mundos').textContent = 'Erro ao carregar os dados.';
-        document.getElementById('campanhas').className = 'erro';
-        document.getElementById('campanhas').textContent = 'Erro ao carregar as campanhas.';
+        console.error('Erro ao carregar dados:', err);
       }
     }
 
-    carregarTudo();
+    inicializar();
   </script>
 </body>
 </html>

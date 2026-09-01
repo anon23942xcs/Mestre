@@ -17,6 +17,7 @@ from app.models.estado import EstadoCompleto, Jogador, MensagemChat
 from app.models.requests import (
     AcaoRequest,
     CriarPersonagemRequest,
+    EditarJogadorCampanhaRequest,
     EditarMensagemRequest,
     EditarNarracaoRequest,
     PresencaNPCRequest,
@@ -59,6 +60,7 @@ async def criar_campanha(dados: CriarPersonagemRequest):
             historico=(personagem.historico if personagem else dados.historico).strip(),
             ficha_completa=(personagem.ficha_completa if personagem else dados.ficha_completa).strip(),
             ficha_estruturada=organizar_ficha_markdown(personagem.ficha_completa if personagem else dados.ficha_completa),
+            imagem=(personagem.imagem if (personagem and getattr(personagem, "imagem", None)) else getattr(dados, "imagem", "")).strip(),
             ficha_sistema=(
                 construir_ficha(mundo.configuracao.d10_pontos_atributos, dados.d10_atributos_jogador)
                 if mundo.configuracao.sistema_rpg and mundo.configuracao.sistema_id == "d10" else {}
@@ -113,7 +115,7 @@ async def obter_campanha(campanha_id: str):
 
     if not estado.historico_chat:
         nome_jogador = estado.jogador.nome if estado.jogador and estado.jogador.nome else "Jogador"
-        nome_mestre = "Mestre"
+        nome_mestre = (getattr(estado.configuracao_mundo, "nome_mestre", "") or "Mestre").strip() or "Mestre"
         if estado.configuracao_mundo.primeira_mensagem:
             primeira = estado.configuracao_mundo.primeira_mensagem.replace("{{user}}", nome_jogador)
             estado.historico_chat.append(MensagemChat(autor="mestre", nome=nome_mestre, conteudo=primeira))
@@ -333,4 +335,49 @@ async def sincronizar_wiki_endpoint(campanha_id: str):
     return resultado
 
 
+@router.put("/{campanha_id}/jogador", response_model=EstadoCompleto)
+async def editar_jogador_campanha(campanha_id: str, dados: EditarJogadorCampanhaRequest):
+    """
+    Edita a ficha do jogador DENTRO da campanha específica, com escrita atômica.
+    Nunca altera o perfil reutilizável de Personagem, garantindo isolamento entre mesas.
+    """
+    try:
+        with repositorio.bloqueio(campanha_id):
+            estado = repositorio.carregar(campanha_id)
+            if not estado:
+                raise HTTPException(status_code=404, detail="Campanha não encontrada")
 
+            jog = estado.jogador
+            if dados.nome is not None and dados.nome.strip():
+                jog.nome = dados.nome.strip()
+            if dados.idade is not None:
+                jog.idade = dados.idade
+            if dados.genero is not None:
+                jog.genero = dados.genero.strip()
+            if dados.aparencia is not None:
+                jog.aparencia = dados.aparencia.strip()
+            if dados.historico is not None:
+                jog.historico = dados.historico.strip()
+            if dados.ficha_completa is not None:
+                jog.ficha_completa = dados.ficha_completa.strip()
+                jog.ficha_estruturada = organizar_ficha_markdown(jog.ficha_completa)
+            if dados.imagem is not None:
+                jog.imagem = dados.imagem.strip()
+            if dados.pv is not None:
+                jog.pv = dados.pv
+            if dados.pv_max is not None:
+                jog.pv_max = dados.pv_max
+            if dados.inventario is not None:
+                jog.inventario = [str(item).strip() for item in dados.inventario if str(item).strip()]
+            if dados.atributos is not None and isinstance(dados.atributos, dict):
+                for k, v in dados.atributos.items():
+                    if hasattr(jog.atributos, k):
+                        try:
+                            setattr(jog.atributos, k, int(v))
+                        except (ValueError, TypeError):
+                            pass
+
+            repositorio.salvar(estado)
+            return estado
+    except ValueError:
+        raise HTTPException(status_code=400, detail="campanha_id inválido")

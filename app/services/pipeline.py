@@ -73,7 +73,7 @@ def processar_turno(estado: EstadoCompleto, mensagem: str) -> ResultadoTurno:
 
     # Histórico persistente de mensagens da conversa
     nome_jogador = estado.jogador.nome if estado.jogador and estado.jogador.nome else "Jogador"
-    nome_mestre = "Mestre"
+    nome_mestre = (getattr(estado.configuracao_mundo, "nome_mestre", "") or "Mestre").strip() or "Mestre"
     
     if not estado.historico_chat and estado.configuracao_mundo and estado.configuracao_mundo.primeira_mensagem:
         primeira = estado.configuracao_mundo.primeira_mensagem.replace("{{user}}", nome_jogador)

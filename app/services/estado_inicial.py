@@ -23,7 +23,8 @@ def criar_estado_inicial(campanha_id: str, jogador: Jogador, configuracao_mundo:
     primeira_msg = configuracao.primeira_mensagem.replace("{{user}}", jogador.nome) if configuracao.primeira_mensagem else ""
     historico = []
     if primeira_msg:
-        historico.append(MensagemChat(autor="mestre", nome="Mestre", conteudo=primeira_msg))
+        nome_mestre = (getattr(configuracao, "nome_mestre", "") or "Mestre").strip() or "Mestre"
+        historico.append(MensagemChat(autor="mestre", nome=nome_mestre, conteudo=primeira_msg))
 
 
     return EstadoCompleto(

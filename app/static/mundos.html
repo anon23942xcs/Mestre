@@ -1,1 +1,241 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mestre — Mundos</title><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;font-family:Arial;background:#1a1a2e;color:#eee}header,main{max-width:1050px;margin:auto;padding:28px 24px}header{max-width:none;background:#16213e;border-bottom:1px solid #345}h1{color:#e94560;margin:0}.topo,.acoes{display:flex;gap:10px;justify-content:space-between;align-items:center}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin-top:22px}.card,.vazio,.erro{padding:18px;border-radius:8px;background:#0f3460}.card h2{margin:8px 0}.card p{color:#ccd;white-space:pre-wrap}.botao{padding:10px 14px;border:0;border-radius:5px;background:#e94560;color:#fff;text-decoration:none;cursor:pointer;font:inherit}.sec{background:transparent;border:1px solid #8fd694;color:#8fd694}.voltar{color:#f4d35e}dialog{width:min(720px,94vw);border:1px solid #e94560;border-radius:9px;background:#16213e;color:#eee;padding:24px}dialog::backdrop{background:#000a}form{display:grid;gap:8px}label{font-size:13px;color:#ccd}input,textarea,select{width:100%;padding:9px;background:#0f3460;color:#fff;border:1px solid #345;border-radius:4px;font:inherit}textarea{min-height:75px}.status{color:#f4d35e;font-size:13px}</style></head><body><header><h1>Mundos</h1><p>Molde canônico: suas fichas serão copiadas para cada campanha.</p></header><main><div class="topo"><a class="voltar" href="/">← Campanhas</a><button id="novo" class="botao">Novo mundo</button></div><div id="lista" class="grid">Carregando mundos…</div></main><dialog id="editor"><form id="form"><div class="topo"><h2 id="titulo">Novo mundo</h2><button type="button" class="botao sec" id="fechar">Fechar</button></div><label>Nome<input id="nome" required maxlength="160"></label><label>Descrição<textarea id="descricao" maxlength="4000"></textarea></label><label>Cenário<textarea id="cenario"></textarea></label><label>Personalidade do Mestre<textarea id="personalidade"></textarea></label><label>Primeira mensagem<textarea id="primeira"></textarea></label><label>Diálogos de exemplo<textarea id="dialogos"></textarea></label><label>Sistema<select id="sistema"><option value="d20">d20</option><option value="d10">d10</option><option value="nenhum">Narrativa pura</option></select></label><label><input type="checkbox" id="usar" checked> Usar sistema de RPG</label><label>d10: limiar de sucesso<input id="limiar" type="number" min="2" max="10" value="6"></label><label>d10: pontos (físico, social, mental)<input id="pontos" value="4, 3, 2"></label><div id="status" class="status"></div><button class="botao">Salvar mundo</button></form></dialog><script>let mundos=[],editando=null;const esc=v=>{const e=document.createElement('span');e.textContent=v??'';return e.innerHTML};async function carregar(){const a=document.getElementById('lista');try{const r=await fetch('/api/mundos');if(!r.ok)throw Error();mundos=await r.json();if(!mundos.length){a.className='vazio';a.textContent='Nenhum mundo criado ainda.';return}a.className='grid';a.innerHTML=mundos.map(m=>`<article class="card"><small>Mundo canônico</small><h2>${esc(m.nome)}</h2><p>${esc(m.descricao||m.configuracao.cenario)}</p><div class="acoes"><a class="botao" href="/mundos/${encodeURIComponent(m.id)}/wiki">Fichas</a><button class="botao sec editar" data-id="${esc(m.id)}">Editar</button><button class="botao sec apagar" data-id="${esc(m.id)}">Apagar</button></div></article>`).join('');a.querySelectorAll('.editar').forEach(b=>b.onclick=()=>abrir(mundos.find(m=>m.id===b.dataset.id)));a.querySelectorAll('.apagar').forEach(b=>b.onclick=()=>apagar(b.dataset.id))}catch{a.className='erro';a.textContent='Não foi possível carregar os mundos.'}}function abrir(m=null){editando=m;const c=m?.configuracao||{};document.getElementById('titulo').textContent=m?'Editar mundo':'Novo mundo';document.getElementById('nome').value=m?.nome||'';document.getElementById('descricao').value=m?.descricao||'';document.getElementById('cenario').value=c.cenario||'';document.getElementById('personalidade').value=c.personalidade||'';document.getElementById('primeira').value=c.primeira_mensagem||'';document.getElementById('dialogos').value=c.dialogos_exemplo||'';document.getElementById('sistema').value=c.sistema_id||'d20';document.getElementById('usar').checked=c.sistema_rpg??true;document.getElementById('limiar').value=c.d10_limiar_sucesso||6;document.getElementById('pontos').value=(c.d10_pontos_atributos||[4,3,2]).join(', ');document.getElementById('status').textContent='';document.getElementById('editor').showModal()}document.getElementById('novo').onclick=()=>abrir();document.getElementById('fechar').onclick=()=>document.getElementById('editor').close();document.getElementById('form').onsubmit=async e=>{e.preventDefault();const pontos=document.getElementById('pontos').value.split(',').map(Number);const dados={nome:document.getElementById('nome').value.trim(),descricao:document.getElementById('descricao').value.trim(),configuracao:{cenario:document.getElementById('cenario').value.trim(),personalidade:document.getElementById('personalidade').value.trim(),primeira_mensagem:document.getElementById('primeira').value.trim(),dialogos_exemplo:document.getElementById('dialogos').value.trim(),sistema_rpg:document.getElementById('usar').checked,sistema_id:document.getElementById('sistema').value,d10_limiar_sucesso:Number(document.getElementById('limiar').value),d10_pontos_atributos:pontos}};const r=await fetch(editando?`/api/mundos/${encodeURIComponent(editando.id)}`:'/api/mundos',{method:editando?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)});if(!r.ok){document.getElementById('status').textContent='Não foi possível salvar.';return}document.getElementById('editor').close();carregar()};async function apagar(id){if(!confirm('Apagar este mundo e suas fichas canônicas? Campanhas existentes não serão alteradas.'))return;const r=await fetch(`/api/mundos/${encodeURIComponent(id)}`,{method:'DELETE'});if(r.ok)carregar()}carregar()</script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mestre — Mundos</title>
+  <link rel="stylesheet" href="/static/shared.css">
+  <style>
+    .mundo-card-header {
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside id="app-sidebar" class="app-sidebar"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar">
+        <div class="app-topbar-title">
+          <span>🌍</span> Mundos & Universos
+        </div>
+        <div class="app-topbar-actions">
+          <button class="btn btn-primary" id="novo">+ Novo Mundo</button>
+        </div>
+      </header>
+
+      <div class="app-container">
+        <p style="color:var(--text-muted); margin-top:0; margin-bottom:22px;">
+          Moldes canônicos de universo. A foto do mundo é também a imagem do Mestre deste universo.
+        </p>
+
+        <div id="lista" class="grid-cards" aria-live="polite">Carregando mundos…</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Dialog de Criação / Edição do Mundo -->
+  <dialog id="editor" class="clean-dialog">
+    <form id="form">
+      <div class="dialog-header">
+        <h2 id="titulo">Novo Mundo</h2>
+        <button type="button" class="btn btn-secondary btn-sm" id="fechar">✕</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Nome do Mundo</label>
+          <input id="nome" class="input-clean" required maxlength="160" placeholder="Ex: Tormenta, Faerûn, Neo-Tóquio 2099">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Descrição Geral</label>
+          <textarea id="descricao" class="textarea-clean" maxlength="4000" placeholder="Resumo curto sobre o mundo..."></textarea>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Nome do Mestre / Narrador</label>
+            <input id="nome_mestre" class="input-clean" maxlength="80" placeholder="Ex: Mestre, O Oráculo, A Anciã">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Foto do Mestre & Capa do Mundo (URL)</label>
+            <input id="imagem_mestre" class="input-clean" maxlength="2000" placeholder="https://exemplo.com/foto_mestre.png">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cenário Inicial & Contexto</label>
+          <textarea id="cenario" class="textarea-clean" placeholder="Descreva a atmosfera, locais de partida e contexto inicial..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Personalidade do Mestre (Tom narrativo)</label>
+          <textarea id="personalidade" class="textarea-clean" placeholder="Ex: Sombrio e detalhista, épico e heroico, bem-humorado..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Primeira Mensagem (Abertura da sessão)</label>
+          <textarea id="primeira" class="textarea-clean" placeholder="Use {{user}} para referenciar o nome do jogador..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Diálogos de Exemplo (Tom de fala dos NPCs)</label>
+          <textarea id="dialogos" class="textarea-clean"></textarea>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; align-items:center; background:#181921; padding:12px; border-radius:var(--radius-sm); border:1px solid var(--border-card);">
+          <div class="form-group">
+            <label class="form-label">Sistema de Regras</label>
+            <select id="sistema" class="select-clean">
+              <option value="d20">d20 (D&D / Fantasia Clássica)</option>
+              <option value="d10">d10 (Storyteller / Narrativo)</option>
+              <option value="nenhum">Narrativa Pura (Sem rolagens)</option>
+            </select>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; margin-top:16px;">
+            <input type="checkbox" id="usar" checked style="width:18px; height:18px; accent-color:var(--accent-coral);">
+            <label for="usar" style="font-size:13px; color:var(--text-main); cursor:pointer;">Ativar mecânicas de RPG</label>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">d10: Limiar de Sucesso</label>
+            <input id="limiar" class="input-clean" type="number" min="2" max="10" value="6">
+          </div>
+          <div class="form-group">
+            <label class="form-label">d10: Pontos de Atributos</label>
+            <input id="pontos" class="input-clean" value="4, 3, 2">
+          </div>
+        </div>
+
+        <div id="status" style="color:var(--accent-yellow); font-size:13px; min-height:18px;"></div>
+      </div>
+
+      <div class="dialog-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('editor').close()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar Mundo</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/static/sidebar.js"></script>
+  <script>
+    let mundos = [], editando = null;
+    const esc = v => {
+      const e = document.createElement('span');
+      e.textContent = v ?? '';
+      return e.innerHTML;
+    };
+
+    async function carregar() {
+      const a = document.getElementById('lista');
+      try {
+        const r = await fetch('/api/mundos');
+        if (!r.ok) throw Error();
+        mundos = await r.json();
+        if (!mundos.length) {
+          a.innerHTML = '<div style="grid-column: 1/-1; padding: 28px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md); color: var(--text-muted); text-align: center;">Nenhum mundo criado ainda. Clique em "+ Novo Mundo" para começar.</div>';
+          return;
+        }
+
+        a.innerHTML = mundos.map(m => {
+          const c = m.configuracao || {};
+          const capaImg = c.imagem_mestre && c.imagem_mestre.trim()
+            ? `<img class="clean-card-img" src="${esc(c.imagem_mestre.trim())}" alt="${esc(m.nome)}" onerror="this.style.display='none'">`
+            : '';
+
+          const nomeMestreStr = c.nome_mestre ? ` • Mestre: ${esc(c.nome_mestre)}` : '';
+
+          return `
+            <article class="clean-card">
+              ${capaImg}
+              <div class="clean-card-badge">Mundo Canônico${nomeMestreStr}</div>
+              <h2 class="clean-card-title">${esc(m.nome)}</h2>
+              <p class="clean-card-desc">${esc(m.descricao || c.cenario || 'Sem descrição.')}</p>
+              
+              <div class="clean-card-actions">
+                <a class="btn btn-primary btn-sm" href="/mundos/${encodeURIComponent(m.id)}/wiki" title="Ver e editar fichas e lore do mundo">📖 Fichas da Wiki</a>
+                <button class="btn btn-secondary btn-sm editar" data-id="${esc(m.id)}" title="Configurar cenário, Mestre e regras">⚙️ Editar Mundo</button>
+                <button class="btn btn-danger btn-sm apagar" data-id="${esc(m.id)}" title="Excluir mundo">🗑️</button>
+              </div>
+            </article>
+          `;
+        }).join('');
+
+        a.querySelectorAll('.editar').forEach(b => b.onclick = () => abrir(mundos.find(m => m.id === b.dataset.id)));
+        a.querySelectorAll('.apagar').forEach(b => b.onclick = () => apagar(b.dataset.id));
+      } catch {
+        a.innerHTML = '<div style="grid-column: 1/-1; color: var(--accent-coral);">Não foi possível carregar os mundos.</div>';
+      }
+    }
+
+    function abrir(m = null) {
+      editando = m;
+      const c = m?.configuracao || {};
+      document.getElementById('titulo').textContent = m ? 'Editar Configuração do Mundo' : 'Novo Mundo';
+      document.getElementById('nome').value = m?.nome || '';
+      document.getElementById('descricao').value = m?.descricao || '';
+      document.getElementById('nome_mestre').value = c.nome_mestre || 'Mestre';
+      document.getElementById('imagem_mestre').value = c.imagem_mestre || '';
+      document.getElementById('cenario').value = c.cenario || '';
+      document.getElementById('personalidade').value = c.personalidade || '';
+      document.getElementById('primeira').value = c.primeira_mensagem || '';
+      document.getElementById('dialogos').value = c.dialogos_exemplo || '';
+      document.getElementById('sistema').value = c.sistema_id || 'd20';
+      document.getElementById('usar').checked = c.sistema_rpg ?? true;
+      document.getElementById('limiar').value = c.d10_limiar_sucesso || 6;
+      document.getElementById('pontos').value = (c.d10_pontos_atributos || [4, 3, 2]).join(', ');
+      document.getElementById('status').textContent = '';
+      document.getElementById('editor').showModal();
+    }
+
+    document.getElementById('novo').onclick = () => abrir();
+    document.getElementById('fechar').onclick = () => document.getElementById('editor').close();
+
+    document.getElementById('form').onsubmit = async e => {
+      e.preventDefault();
+      const pontos = document.getElementById('pontos').value.split(',').map(Number);
+      const dados = {
+        nome: document.getElementById('nome').value.trim(),
+        descricao: document.getElementById('descricao').value.trim(),
+        configuracao: {
+          cenario: document.getElementById('cenario').value.trim(),
+          personalidade: document.getElementById('personalidade').value.trim(),
+          primeira_mensagem: document.getElementById('primeira').value.trim(),
+          dialogos_exemplo: document.getElementById('dialogos').value.trim(),
+          nome_mestre: document.getElementById('nome_mestre').value.trim() || 'Mestre',
+          imagem_mestre: document.getElementById('imagem_mestre').value.trim(),
+          sistema_rpg: document.getElementById('usar').checked,
+          sistema_id: document.getElementById('sistema').value,
+          d10_limiar_sucesso: Number(document.getElementById('limiar').value),
+          d10_pontos_atributos: pontos
+        }
+      };
+
+      const r = await fetch(editando ? `/api/mundos/${encodeURIComponent(editando.id)}` : '/api/mundos', {
+        method: editando ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados)
+      });
+
+      if (!r.ok) {
+        document.getElementById('status').textContent = 'Não foi possível salvar o mundo.';
+        return;
+      }
+      document.getElementById('editor').close();
+      carregar();
+    };
+
+    async function apagar(id) {
+      if (!confirm('Apagar este mundo e suas fichas canônicas? Campanhas já iniciadas não serão afetadas.')) return;
+      const r = await fetch(`/api/mundos/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (r.ok) carregar();
+    }
+
+    carregar();
+  </script>
+</body>
+</html>

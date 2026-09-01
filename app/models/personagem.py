@@ -12,5 +12,6 @@ class Personagem(BaseModel):
     aparencia: str
     historico: str = ""
     ficha_completa: str = ""
+    imagem: str = ""
     data_criacao: str = Field(default_factory=lambda: datetime.now().isoformat())
     ultima_atualizacao: str = Field(default_factory=lambda: datetime.now().isoformat())
