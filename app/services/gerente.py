@@ -56,7 +56,7 @@ Responda APENAS com um JSON válido, sem texto antes ou depois, sem cercas de c�
 }
 
 ATENÇÃO:
-- Se uma entidade sofreu morte, destruição ou mudança drástica (ex: Olive morreu/foi devorada, sentinela destruído, andar da torre conquistado), use patch_wiki.fichas_atualizadas com o ID exato dela listado abaixo para atualizar campos e registrar no conteudo_append!
+- Se uma entidade sofreu morte, destruição ou mudança drástica (ex: um NPC morreu, uma estrutura foi destruída, um objetivo foi concluído), use patch_wiki.fichas_atualizadas com o ID exato dela listado abaixo para atualizar campos e registrar no conteudo_append!
 - Se o jogador despertou ou absorveu novos poderes, preencha "jogador_atualizado".
 
 [FICHAS DA WIKI DISPONÍVEIS]

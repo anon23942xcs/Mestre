@@ -12,9 +12,9 @@ from app.storage import ficha_repositorio
 PROMPT_SINCRONIZAR = """Você é o Cronista e Compilador Canônico do RPG. Sua missão é consolidar os acontecimentos recentes da história, atualizando as fichas da Wiki do mundo, a ficha do jogador e as memórias de longo prazo.
 
 IMPORTANTE:
-- Se personagens morreram, foram devorados ou derrotados (exemplo: Olive foi devorada ou morta por Mike), atualize a ficha correspondente em "fichas_atualizadas" alterando os campos (ex: "status": "Morta / Devorada", "rank": "Poderes absorvidos") e inserindo o relato no "conteudo_append".
-- Se o jogador evoluiu, despertou habilidades, absorveu poderes ou subiu de rank (ex: Mike absorveu a Cura Rank S de Olive ou subiu andares da torre), registre em "jogador_atualizado" e se apropriado crie uma ficha nova de habilidade em "fichas_novas".
-- Atualize locais ou facções se foram afetados (ex: andares da torre desbravados, monstros destruídos).
+- Se personagens morreram, foram devorados ou derrotados (exemplo: um NPC foi derrotado/morto por outro personagem), atualize a ficha correspondente em "fichas_atualizadas" alterando os campos (ex: "status": "Derrotado / Morto", "rank": "Poderes perdidos") e inserindo o relato no "conteudo_append".
+- Se o jogador evoluiu, despertou habilidades, absorveu poderes ou subiu de rank (ex: o jogador absorveu uma habilidade de um NPC ou subiu de nível), registre em "jogador_atualizado" e se apropriado crie uma ficha nova de habilidade em "fichas_novas".
+- Atualize locais ou facções se foram afetados (ex: novos locais desbravados, ameaças eliminadas).
 - Gere até {limite} memórias importantes canônicas resumidas de longo prazo.
 
 Responda APENAS com JSON no formato:

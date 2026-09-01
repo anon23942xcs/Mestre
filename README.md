@@ -1,10 +1,10 @@
-# Mestre 0.9.0 - motor de RPG com IA
+# Mestre 0.9.1 - motor de RPG com IA
 
 ## Versão atual
 
-**0.9.0** — Histórico de chat persistente, edição e deleção em cascata de
-mensagens, regeneração de resposta, sincronização canônica da Wiki, e correções
-de arquitetura (double-save, payload inflado, listagem otimizada).
+**0.9.1** — Neutralização completa dos prompts do motor (remoção de exemplos
+específicos de campanhas e checagens de cenário hardcoded), templates agnósticos
+a mundos específicos, e diretório `data/` desacoplado do controle de versão.
 
 O projeto usa versionamento semântico: `MAIOR.MENOR.CORREÇÃO`. Recursos novos
 compatíveis elevam a versão menor; correções elevam a versão de correção;
@@ -243,6 +243,19 @@ tests/                   dados, patch, persistência, prompts (sem Gemini)
   preenchidas com `nome_mestre = "Mestre"` em vez de "Olive".
 - **Listagem otimizada**: `repositorio.listar()` lê apenas 4 KB por arquivo
   (regex sobre cabeçalho) em vez de parsear o JSON inteiro.
+
+## Correções na 0.9.1
+
+- **Prompts neutros e genéricos**: todos os prompts de IA (`compilador.py`,
+  `gerente.py` e `narrador.py`) tiveram seus exemplos substituídos por
+  placeholders agnósticos ao mundo/campanha, evitando contaminação em mundos novos.
+- **Remoção de regra hardcoded de cenário**: eliminada a condicional
+  específica para o cenário "Karvane" em `estado_inicial.py`.
+- **Interface e templates neutros**: placeholders em `index.html` foram
+  neutralizados e constantes residuais de avatar removidas.
+- **Desacoplamento de `data/`**: pasta `data/` incluída no `.gitignore` e
+  desindexada do repositório git (`git rm -r --cached data`), impedindo
+  o versionamento de dados de teste ou campanhas locais.
 
 ## O que ainda não está resolvido
 

@@ -14,8 +14,6 @@ def criar_estado_inicial(campanha_id: str, jogador: Jogador, configuracao_mundo:
 
     if not configuracao.cenario or configuracao.cenario == "Um mundo à espera de uma história.":
         local_inicial = "Cena inicial"
-    elif "Karvane" in configuracao.cenario:
-        local_inicial = "Estábulos nos Portões de Karvane"
     elif len(configuracao.cenario) <= 60 and "\n" not in configuracao.cenario:
         local_inicial = configuracao.cenario
     else:

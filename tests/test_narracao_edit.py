@@ -8,7 +8,7 @@ client = TestClient(app)
 
 def test_editar_ultima_narracao():
     cid = repositorio.novo_id()
-    estado = criar_estado_inicial(cid, Jogador(nome='Mike', idade=18, genero='M', aparencia='alto', historico='viajante'))
+    estado = criar_estado_inicial(cid, Jogador(nome='Heroi', idade=18, genero='M', aparencia='alto', historico='viajante'))
     estado.ultima_narracao = 'Texto antigo do Mestre'
     repositorio.salvar(estado)
 
@@ -26,12 +26,12 @@ def test_editar_ultima_narracao():
 def test_editar_e_deletar_mensagem_cascata():
     from app.models.estado import MensagemChat
     cid = repositorio.novo_id()
-    estado = criar_estado_inicial(cid, Jogador(nome='Mike', idade=18, genero='M', aparencia='alto', historico='viajante'))
-    msg1 = MensagemChat(id="msg_1", autor="mestre", nome="Olive", conteudo="Primeira cena")
-    msg2 = MensagemChat(id="msg_2", autor="jogador", nome="Mike", conteudo="Minha primeira ação")
-    msg3 = MensagemChat(id="msg_3", autor="mestre", nome="Olive", conteudo="Resposta da Olive")
-    msg4 = MensagemChat(id="msg_4", autor="jogador", nome="Mike", conteudo="Minha segunda ação")
-    msg5 = MensagemChat(id="msg_5", autor="mestre", nome="Olive", conteudo="Resposta dois")
+    estado = criar_estado_inicial(cid, Jogador(nome='Heroi', idade=18, genero='M', aparencia='alto', historico='viajante'))
+    msg1 = MensagemChat(id="msg_1", autor="mestre", nome="Mestre", conteudo="Primeira cena")
+    msg2 = MensagemChat(id="msg_2", autor="jogador", nome="Heroi", conteudo="Minha primeira ação")
+    msg3 = MensagemChat(id="msg_3", autor="mestre", nome="Mestre", conteudo="Resposta do Mestre")
+    msg4 = MensagemChat(id="msg_4", autor="jogador", nome="Heroi", conteudo="Minha segunda ação")
+    msg5 = MensagemChat(id="msg_5", autor="mestre", nome="Mestre", conteudo="Resposta dois")
     estado.historico_chat = [msg1, msg2, msg3, msg4, msg5]
     estado.ultima_narracao = msg5.conteudo
     estado.turno = 2
@@ -50,7 +50,7 @@ def test_editar_e_deletar_mensagem_cascata():
     dados_del = resp_del.json()
     ids_restantes = [m["id"] for m in dados_del["historico_chat"]]
     assert ids_restantes == ["msg_1", "msg_2", "msg_3"]
-    assert dados_del["ultima_narracao"] == "Resposta da Olive"
+    assert dados_del["ultima_narracao"] == "Resposta do Mestre"
     assert dados_del["turno"] == 1
 
     repositorio.deletar(cid)

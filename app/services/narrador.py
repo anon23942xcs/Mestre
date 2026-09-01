@@ -36,7 +36,7 @@ PROMPT = """[INSTRUÇÕES DO MESTRE]
 - Use SEMPRE essa mistura de asteriscos e aspas, nunca escreva a cena inteira em um único parágrafo de prosa corrida sem essas marcações.
 - Respeite a ficha completa do personagem abaixo (se houver): habilidades, limitações, regras próprias e tom descrito nela têm prioridade sobre suposições genéricas de RPG de fantasia.
 - Continue a partir da cena anterior e das memórias recentes. Não reinicie a cena do zero.
-- Se um NPC morreu, foi devorado ou derrotado de acordo com as Memórias Importantes ou Cena Anterior (ex: se Olive morreu ou foi devorada por Mike), NUNCA o faça falar, agir ou estar vivo na cena atual. Respeite absolutamente as mortes e consequências canônicas!
+- Se um NPC morreu, foi devorado ou derrotado de acordo com as Memórias Importantes ou Cena Anterior (ex: se um NPC morreu de acordo com as Memórias Importantes ou Cena Anterior), NUNCA o faça falar, agir ou estar vivo na cena atual. Respeite absolutamente as mortes e consequências canônicas!
 
 [ESTADO DO MUNDO]
 Mundo: {mundo}

@@ -773,8 +773,8 @@
 
         <div class="sidebar-bottom">
             <div class="card-jogador-sidebar" id="sidebar-card-jogador" style="display:none;">
-                <div class="nome" id="sidebar-nome-jogador">Mike</div>
-                <div class="info" id="sidebar-info-jogador">Rank F (Humano)</div>
+                <div class="nome" id="sidebar-nome-jogador">Jogador</div>
+                <div class="info" id="sidebar-info-jogador">Personagem</div>
             </div>
             <button class="nav-item" id="sidebar-btn-ficha" onclick="abrirFicha()" style="display:none; width:100%; border:none; background:transparent; justify-content:flex-start;">
                 <span class="icon">📋</span> Ver Ficha Completa
@@ -811,7 +811,7 @@
                 <div class="top-bar-left">
                     <a href="/" class="btn-voltar" title="Voltar ao início">‹</a>
                     <div class="top-bar-location">
-                        📍 <span id="header-local">Estábulos nos Portões de Karvane</span>
+                        📍 <span id="header-local">Cena inicial</span>
                     </div>
                 </div>
                 <div class="top-bar-right">
@@ -845,7 +845,7 @@
                     ></textarea>
                     <div class="input-footer-row">
                         <div class="input-hint-user">
-                            <span id="label-nome-jogador">Mike</span>
+                            <span id="label-nome-jogador">Jogador</span>
                         </div>
                         <div class="input-actions-right">
                             <button id="btn-regenerar-rodape" class="btn-regenerar" onclick="regenerarUltimoTurno()" title="Regenerar última resposta da IA" style="display:none;">
@@ -891,7 +891,6 @@
         let estadoAtual = null;
         let estaGerando = false;
 
-        const AVATAR_OLIVE = "https://ella.janitorai.com/media-approved/-HfiGSgXpt8OJWExgJNeD.webp";
 
         window.addEventListener('DOMContentLoaded', async () => {
             await carregarPersonagens();
