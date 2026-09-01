@@ -1,9 +1,9 @@
-# Mestre 0.7.0 - motor de RPG com IA
+# Mestre 0.8.0 - motor de RPG com IA
 
 ## Versão atual
 
-**0.7.0** — Adiciona personagens reutilizáveis, separados das campanhas, e
-remove a ficha padrão criada automaticamente em toda nova campanha.
+**0.8.0** — Adiciona mundos canônicos como moldes: cada campanha recebe uma
+cópia independente das fichas e da configuração do mundo escolhido.
 
 O projeto usa versionamento semântico: `MAIOR.MENOR.CORREÇÃO`. Recursos novos
 compatíveis elevam a versão menor; correções elevam a versão de correção;
@@ -30,51 +30,65 @@ login, banco, pagamento nem Modo Janitor.
 
 O que já funciona de ponta a ponta:
 
-- criar, retomar e apagar campanhas (`data/{id}.json`), escolhendo um
-  personagem reutilizável
+- criar, retomar e apagar campanhas (`data/{id}.json`) a partir de um mundo e
+  de um personagem reutilizáveis
+- fluxo dinâmico na Home (`home.html`) para iniciar ou continuar campanhas
+  diretamente a partir do card do mundo com seletor "Interpretando como",
+  pré-seleção inteligente (personagem mais recente ou da campanha existente do mundo)
+  e exclusão de campanhas sem recarregar a página
+- melhorias visuais nos cards da Home com padding ampliado, elevação e sombras no hover,
+  bordas arredondadas e hierarquia tipográfica reforçada
 - criar, editar e apagar personagens separados das campanhas
   (`data/personagens/{id}.json`)
-- home em galeria de campanhas, com links reais para jogar ou abrir o mundo
-  de cada campanha em outra aba
+- criar, editar e apagar mundos canônicos (`data/mundos/{id}.json`) e suas
+  fichas-base
+- home em galeria de mundos e campanhas, com links diretos para jogar, editar ou abrir
+  o mundo/campanha na Wiki
 - turno: Intérprete → dados (se preciso) → Gerente (patch de estado) → Narrador
 - compilação de memórias a cada N turnos
 - o servidor é a fonte de verdade (o cliente não reenvia PV/inventário)
-- catálogo canônico editável de personagens, locais, raças, itens e mais;
-  cada ficha é persistida separadamente, com texto, atributos, imagem, tags
-  e relações por ID com outras fichas, além de páginas próprias para listar e
-  consultar cada ficha
+- Wiki por mundo e por campanha com sidebar colapsável por categoria, contadores
+  dinâmicos `(N)`, listagem rápida e painel de perfil/detalhe rico com imagem,
+  texto formatado, campos estruturados, tags e relações entre fichas
 - o mesmo patch do Gerente pode atualizar fichas e relações da Wiki sem criar
   uma chamada adicional à IA por turno
 - NPCs presentes e ausentes: quem deixa a cena permanece salvo, com sua
   localização e memória da relação, mas só os presentes são enviados à IA
 - fichas extensas de jogador em Markdown são preservadas e organizadas por
   seção localmente, sem uma IA resumir ou alterar seu conteúdo
-- cada mundo tem cenário, personalidade do Mestre, primeira mensagem e
-  diálogos de exemplo, configuráveis ao criar a campanha
+- cada mundo define cenário, personalidade do Mestre, primeira mensagem,
+  diálogos de exemplo e sistema de regras para as campanhas que nascerem dele
 - modo opcional de narrativa pura: sem dados, PV, testes ou rolagens no
   processamento e no contexto enviado ao Narrador
 - sistemas de regras plugáveis, com contrato genérico de resultado; hoje há os
   plugins `d20` (padrão), `d10` (pool oposto) e `nenhum` (narrativa pura)
 
-## Fichas, Wiki e presença
+## Mundos, campanhas, Wiki e presença
 
-A home em `/` lista as campanhas em cartões e também leva a
-`/personagens`, onde os personagens do jogador podem ser criados, editados,
-apagados e reutilizados. `/jogo?nova=1` sempre abre o formulário limpo de uma
-nova campanha; `/jogo?campanha_id={id}` abre uma campanha específica. Cada
-campanha recebe uma cópia inicial do personagem selecionado, portanto sua
-evolução, PV e inventário não alteram o perfil nem outras campanhas. A Wiki
-de uma campanha fica em `/campanhas/{id}/wiki`: ela separa as nove categorias
-de ficha e permite criar fichas. Cada cartão leva, por um link real, à página
-da ficha em `/campanhas/{id}/wiki/{ficha_id}`, onde é possível consultar e
-editar seu conteúdo. Links para relações levam às fichas relacionadas.
+A home em `/` lista mundos e campanhas separadamente. Em `/mundos`, é possível
+criar e editar os moldes de mundo; a Wiki canônica de um molde fica em
+`/mundos/{mundo_id}/wiki`. O CRUD correspondente usa `/api/mundos` e as fichas
+do molde estão em `/api/mundos/{mundo_id}/fichas`.
 
-As fichas manuais do mundo continuam sendo a fonte de verdade separada do
-estado dinâmico da partida e começam vazias em uma nova campanha. A API expõe
-o catálogo completo em
-`GET /campanhas/{id}/catalogo` e uma ficha em
-`GET /campanhas/{id}/catalogo/{ficha_id}`; criação, edição e remoção continuam
-em `POST`, `PUT` e `DELETE` no mesmo recurso.
+Uma nova campanha exige um mundo e um personagem. O mundo fornece a
+configuração e suas fichas são copiadas de `mundo_{mundo_id}` para
+`campanha_{campanha_id}`; são arquivos independentes, preservando os IDs. Por
+isso, editar ou apagar um mundo nunca modifica campanhas existentes, e apagar
+uma campanha limpa somente a sua cópia. Campanhas antigas, cujas fichas ainda
+estão em `data/wiki/{campanha_id}/`, continuam legíveis.
+
+Uma campanha nova não cria NPCs ou fichas automaticamente: ela começa com a
+cena descrita na configuração do mundo e com a cópia das fichas do molde.
+
+O início e a retomada de aventuras são feitos diretamente na galeria da Home:
+ao selecionar o personagem no card do mundo ("Interpretando como"), a interface
+identifica se já existe uma campanha para a dupla mundo + personagem e alterna
+o botão entre "Continuar campanha" (levando a `/jogo?campanha_id={id}`) e
+"Iniciar nova campanha" (criando a campanha e iniciando o jogo). O formulário
+manual `/jogo?nova=1` continua disponível como alternativa. A campanha recebe
+uma cópia inicial do personagem selecionado, portanto sua evolução, PV e
+inventário não alteram o perfil nem outras campanhas. A Wiki da campanha fica
+em `/campanhas/{id}/wiki`, com API em `/campanhas/{id}/catalogo`.
 
 As operações de presença também estão disponíveis pela API:
 
@@ -94,14 +108,11 @@ O texto fonte é mantido intacto em `ficha_completa`; títulos Markdown como
 Narrador. Esse processo é local e determinístico: não consome tokens nem
 altera o que foi escrito.
 
-Na seção **Configurar mundo**, o criador pode definir os quatro blocos comuns
-a plataformas de RP: cenário, personalidade do Mestre, primeira mensagem e
-diálogos de exemplo. Há valores padrão se os campos forem deixados vazios.
-
-O mesmo painel inclui **Usar sistema de RPG**. Ele vem ativado por padrão e
-preserva o modo tradicional de dados/PV. Ao desativá-lo, a campanha torna-se
-narrativa pura: ações não rolam testes e o Narrador não recebe PV, HP, CDs,
-rolagens ou o bloco de resultado de dados.
+Em **Mundos**, o criador define os blocos comuns: cenário, personalidade do
+Mestre, primeira mensagem e diálogos de exemplo. Também define se o mundo usa
+RPG e qual sistema de regras é usado. Ao desativar o sistema, campanhas novas
+desse mundo tornam-se narrativa pura: ações não rolam testes e o Narrador não
+recebe PV, HP, CDs, rolagens ou o bloco de resultado de dados.
 
 ## Sistemas de regras
 
@@ -113,16 +124,17 @@ um `ResultadoTesteGenerico` e passa apenas o resumo narrativo ao Mestre.
 com críticos em 20 e 1) reutilizando `services/dados.py`. `d10` rola pools do
 jogador e da oposição; cada d10 igual ou acima do limiar é um sucesso, e vence
 quem tiver mais sucessos (empate é falha do jogador). A oposição usa
-`max(1, (dificuldade - 6) // 2)`, limitada a 7 dados. O limiar é configurável
-na criação da campanha (5 fácil, 6 normal, 7 difícil, 8 muito difícil).
+`max(1, (dificuldade - 6) // 2)`, limitada a 7 dados. O limiar e os pontos do
+d10 são configuráveis no molde de mundo.
 `nenhum` retorna um resultado vazio e serve à narrativa pura. Um novo sistema
 só precisa implementar o contrato de `app/systems/base.py` e ser registrado,
 sem reescrever o pipeline.
 
-## Wiki canônica e patch automático
+## Wiki copiada e patch automático
 
-As fichas ficam em `data/wiki/{campanha_id}/{ficha_id}.json`, separadas do
-estado dinâmico da campanha. Uma ficha pode referenciar outras por relações,
+As fichas canônicas ficam em `data/wiki/mundo_{mundo_id}/{ficha_id}.json` e a
+cópia da campanha em `data/wiki/campanha_{campanha_id}/{ficha_id}.json`.
+Uma ficha pode referenciar outras por relações,
 por exemplo `{"contem_itens": ["item_espada"]}`. O Gerente inclui um
 `patch_wiki` opcional na sua mesma resposta JSON para atualizar fatos e relações
 persistentes; uma relação removida nunca apaga a ficha de destino.
@@ -133,7 +145,7 @@ persistentes; uma relação removida nunca apaga a ficha de destino.
 app/
   config.py              .env, modelo Gemini, limites de memória
   main.py                FastAPI, páginas estáticas e /saude
-  models/                estado, personagem, ficha da Wiki, payloads e resultado de teste
+  models/                estado, mundo, personagem, ficha da Wiki e payloads
   prompts/               system prompt + preencher() seguro
   services/
     ia_client.py         única camada Gemini
@@ -143,16 +155,17 @@ app/
     compilador.py        Passo 0 a cada N turnos
     dados.py             1d20 + atributo
     pipeline.py          orquestra o turno
-    estado_inicial.py    cena inicial (taverna)
+    estado_inicial.py    estado inicial derivado da configuração do mundo
     formatadores.py      texto injetado nos prompts
     fichas_jogador.py    organização local de fichas Markdown
     wiki_gerente.py      aplicação defensiva de patch da Wiki
-  storage/               campanhas, personagens e fichas da Wiki em JSON atômico
-  routers/               campanhas, personagens e Wiki HTTP
+  storage/               campanhas, mundos, personagens e fichas em JSON atômico
+  routers/               campanhas, mundos, personagens e Wiki HTTP
   static/
     home.html            galeria de campanhas (/)
     index.html           tela do jogo (/jogo)
     personagens.html     catálogo de personagens reutilizáveis
+    mundos.html          CRUD dos moldes de mundo
     wiki.html            painel da Wiki por campanha
     ficha.html           detalhe e edição de uma ficha da Wiki
 data/                    um .json por campanha (gitignorado)
@@ -170,8 +183,8 @@ tests/                   dados, patch, persistência, prompts (sem Gemini)
 
 ## O que ainda não está resolvido
 
-- **Autenticação.** Quem tem o `campanha_id` acessa a campanha, sua Wiki e suas
-  fichas.
+- **Autenticação.** Quem tem um ID acessa campanhas, mundos, personagens e
+  fichas correspondentes.
 - **Banco de dados.** JSON em disco não escala nem lista campanhas por usuário.
 - **Rate limiting** das 50 mensagens/dia do Modo Janitor.
 - **Modo Janitor.** Não implementado.

@@ -12,14 +12,15 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.routers import campanha, personagem, wiki
+from app.routers import campanha, mundo, personagem, wiki
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
-app = FastAPI(title="Mestre", version="0.7.0")
+app = FastAPI(title="Mestre", version="0.8.0")
 
 app.include_router(campanha.router)
 app.include_router(personagem.router)
+app.include_router(mundo.router)
 app.include_router(wiki.router)
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -41,6 +42,11 @@ async def pagina_personagens():
     return FileResponse(STATIC_DIR / "personagens.html")
 
 
+@app.get("/mundos")
+async def pagina_mundos():
+    return FileResponse(STATIC_DIR / "mundos.html")
+
+
 @app.get("/campanhas/{campanha_id}/wiki")
 async def pagina_wiki(campanha_id: str):
     return FileResponse(STATIC_DIR / "wiki.html")
@@ -48,6 +54,16 @@ async def pagina_wiki(campanha_id: str):
 
 @app.get("/campanhas/{campanha_id}/wiki/{ficha_id}")
 async def pagina_ficha(campanha_id: str, ficha_id: str):
+    return FileResponse(STATIC_DIR / "ficha.html")
+
+
+@app.get("/mundos/{mundo_id}/wiki")
+async def pagina_wiki_mundo(mundo_id: str):
+    return FileResponse(STATIC_DIR / "wiki.html")
+
+
+@app.get("/mundos/{mundo_id}/wiki/{ficha_id}")
+async def pagina_ficha_mundo(mundo_id: str, ficha_id: str):
     return FileResponse(STATIC_DIR / "ficha.html")
 
 

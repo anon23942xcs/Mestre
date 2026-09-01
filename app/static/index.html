@@ -61,26 +61,9 @@
             <select id="personagem_id" style="width:100%; padding:10px; background:#0f3460; color:white; border:1px solid #345; border-radius:5px;"></select>
             <p style="font-size:13px;color:#b8b8d1;">Personagens são reutilizáveis. O progresso da campanha continua independente.</p>
             <a href="/personagens" class="link-toggle" style="margin-top:0;">Criar ou editar personagens</a>
-            <details class="mundo-config">
-                <summary>Configurar mundo (opcional)</summary>
-                <label for="cenario">Cenário</label>
-                <textarea id="cenario" placeholder="Onde e em que tom a história acontece?"></textarea>
-                <label for="personalidade_mestre">Personalidade do Mestre</label>
-                <textarea id="personalidade_mestre" placeholder="Como o narrador deve conduzir a história?"></textarea>
-                <label for="primeira_mensagem">Primeira mensagem</label>
-                <textarea id="primeira_mensagem" placeholder="A abertura da campanha"></textarea>
-                <label for="dialogos_exemplo">Diálogos de exemplo</label>
-                <textarea id="dialogos_exemplo" placeholder="Exemplos de tom, fala e formatação"></textarea>
-                <label><input type="checkbox" id="sistema_rpg" checked style="width:auto;"> Usar sistema de RPG (dados, testes e PV)</label>
-                <label for="sistema_id">Sistema de regras</label>
-                <select id="sistema_id"><option value="d20">d20 clássico</option><option value="d10">d10 (pool oposto)</option><option value="nenhum">Narrativa pura</option></select>
-                <label for="d10_limiar_sucesso">d10: limiar de sucesso</label>
-                <select id="d10_limiar_sucesso"><option value="5">5 — fácil</option><option value="6" selected>6 — normal</option><option value="7">7 — difícil</option><option value="8">8 — muito difícil</option></select>
-                <label>d10: orçamento de atributos (físico, social, mental)</label>
-                <div class="form-row"><input type="number" id="d10_pontos_fisico" value="4" min="1" max="20" onchange="atualizarOpcoesD10()"><input type="number" id="d10_pontos_social" value="3" min="1" max="20" onchange="atualizarOpcoesD10()"><input type="number" id="d10_pontos_mental" value="2" min="1" max="20" onchange="atualizarOpcoesD10()"></div>
-                <label>d10: distribuir atributos do personagem</label>
-                <div class="form-row"><select id="d10_atributo_fisico"></select><select id="d10_atributo_social"></select><select id="d10_atributo_mental"></select></div>
-            </details>
+            <label for="mundo_id">Mundo</label>
+            <select id="mundo_id" style="width:100%; padding:10px; background:#0f3460; color:white; border:1px solid #345; border-radius:5px;"></select>
+            <p style="font-size:13px;color:#b8b8d1;">As regras e a abertura vêm do mundo escolhido. <a href="/mundos" style="color:#f4d35e;">Gerenciar mundos</a></p>
             <button onclick="criarPersonagem()" style="width:100%;">Iniciar campanha</button>
         </div>
         <span class="link-toggle" onclick="alternarListaCampanhas()">Ver campanhas salvas</span>
@@ -120,25 +103,10 @@
         const iniciarNova = parametrosUrl.get('nova') === '1';
         let campanhaId = iniciarNova ? null : (parametrosUrl.get('campanha_id') || localStorage.getItem(CHAVE_STORAGE));
 
-        function pontosD10() {
-            return ['fisico', 'social', 'mental'].map(categoria =>
-                parseInt(document.getElementById(`d10_pontos_${categoria}`).value) || 0
-            );
-        }
-
-        function atualizarOpcoesD10() {
-            const pontos = pontosD10();
-            ['fisico', 'social', 'mental'].forEach((categoria, indice) => {
-                const select = document.getElementById(`d10_atributo_${categoria}`);
-                const anterior = select.value;
-                select.innerHTML = pontos.map(ponto => `<option value="${ponto}">${ponto}</option>`).join('');
-                select.value = pontos.includes(Number(anterior)) ? anterior : String(pontos[indice]);
-            });
-        }
-
         // Ao carregar a página, tenta retomar a campanha salva.
         window.addEventListener('DOMContentLoaded', async () => {
             await carregarPersonagens();
+            await carregarMundos();
             if (!campanhaId) return;
 
             try {
@@ -183,6 +151,20 @@
             } catch (_) {
                 seletor.innerHTML = '<option value="">Não foi possível carregar personagens</option>';
             }
+        }
+
+        async function carregarMundos() {
+            const seletor = document.getElementById('mundo_id');
+            try {
+                const resposta = await fetch('/api/mundos');
+                if (!resposta.ok) throw new Error();
+                const mundos = await resposta.json();
+                seletor.innerHTML = '<option value="">Escolha um mundo…</option>';
+                mundos.forEach(mundo => { const opcao = document.createElement('option'); opcao.value = mundo.id; opcao.textContent = mundo.nome; seletor.appendChild(opcao); });
+                const mundoDaUrl = parametrosUrl.get('mundo_id');
+                if (mundoDaUrl && mundos.some(mundo => mundo.id === mundoDaUrl)) seletor.value = mundoDaUrl;
+                if (!mundos.length) seletor.innerHTML = '<option value="">Nenhum mundo cadastrado</option>';
+            } catch (_) { seletor.innerHTML = '<option value="">Não foi possível carregar mundos</option>'; }
         }
 
         function mostrarAreaDeChat(estado, mensagemBemVindo) {
@@ -241,14 +223,6 @@
             document.getElementById('chat-area').style.display = 'none';
             document.getElementById('personagem-area').style.display = 'block';
             document.getElementById('chat').innerHTML = '';
-            ['cenario', 'personalidade_mestre', 'primeira_mensagem', 'dialogos_exemplo'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('sistema_rpg').checked = true;
-            document.getElementById('sistema_id').value = 'd20';
-            document.getElementById('d10_limiar_sucesso').value = '6';
-            document.getElementById('d10_pontos_fisico').value = '4';
-            document.getElementById('d10_pontos_social').value = '3';
-            document.getElementById('d10_pontos_mental').value = '2';
-            atualizarOpcoesD10();
             history.replaceState({}, '', '/jogo?nova=1');
         }
 
@@ -310,22 +284,12 @@
         async function criarPersonagem() {
             const personagemId = document.getElementById('personagem_id').value;
             if (!personagemId) { alert('Escolha ou crie um personagem antes de iniciar a campanha.'); return; }
+            const mundoId = document.getElementById('mundo_id').value;
+            if (!mundoId) { alert('Escolha ou crie um mundo antes de iniciar a campanha.'); return; }
             const dados = {
                 personagem_id: personagemId,
-                cenario: document.getElementById('cenario').value || '',
-                personalidade_mestre: document.getElementById('personalidade_mestre').value || '',
-                primeira_mensagem: document.getElementById('primeira_mensagem').value || '',
-                dialogos_exemplo: document.getElementById('dialogos_exemplo').value || '',
-                sistema_rpg: document.getElementById('sistema_rpg').checked,
-                sistema_id: document.getElementById('sistema_id').value,
-                d10_limiar_sucesso: parseInt(document.getElementById('d10_limiar_sucesso').value),
-                d10_pontos_atributos: pontosD10(),
-                d10_atributos_jogador: {
-                    fisico: parseInt(document.getElementById('d10_atributo_fisico').value),
-                    social: parseInt(document.getElementById('d10_atributo_social').value),
-                    mental: parseInt(document.getElementById('d10_atributo_mental').value
-                    )
-                }
+                mundo_id: mundoId,
+                d10_atributos_jogador: {}
             };
 
             const resp = await fetch('/campanhas', {
@@ -346,7 +310,6 @@
             mostrarAreaDeChat(estado, true);
         }
 
-        atualizarOpcoesD10();
 
         async function enviarMensagem() {
             const input = document.getElementById('mensagem');

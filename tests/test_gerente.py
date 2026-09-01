@@ -1,6 +1,6 @@
 import pytest
 
-from app.models.estado import Jogador
+from app.models.estado import Jogador, NPC
 from app.services.estado_inicial import criar_estado_inicial
 from app.services.gerente import aplicar_patch
 from app.services.wiki_gerente import aplicar_patch_wiki
@@ -10,7 +10,9 @@ from app.storage import ficha_repositorio
 
 @pytest.fixture
 def estado():
-    return criar_estado_inicial("abc123", Jogador(nome="Lia", idade=22, genero="F", aparencia="curta", historico="viajante"))
+    estado = criar_estado_inicial("abc123", Jogador(nome="Lia", idade=22, genero="F", aparencia="curta", historico="viajante"))
+    estado.estado.npc_ativos.append(NPC(id="npc_001", nome="Guia", raca="humano", aparencia="curta", humor="indiferente"))
+    return estado
 
 
 def test_aplicar_patch_atualiza_npc_e_local(estado):
@@ -49,7 +51,7 @@ def test_aplicar_patch_preserva_npc_ausente_fora_do_contexto(estado):
         "npcs_saem_de_cena": [{"id": "npc_001", "local_ausente": "mercado"}],
     })
     assert estado.estado.npc_ativos == []
-    assert estado.estado.npc_ausentes[0].nome == "Estalajadeira"
+    assert estado.estado.npc_ausentes[0].nome == "Guia"
     assert estado.estado.npc_ausentes[0].presente is False
     assert estado.estado.npc_ausentes[0].local_ausente == "mercado"
 

@@ -3,15 +3,17 @@ import asyncio
 import pytest
 
 from app.models.personagem import Personagem
+from app.models.mundo import Mundo
 from app.models.requests import CriarPersonagemRequest
 from app.routers.campanha import criar_campanha
-from app.storage import ficha_repositorio, personagem_repositorio, repositorio
+from app.storage import ficha_repositorio, mundo_repositorio, personagem_repositorio, repositorio
 
 
 @pytest.fixture(autouse=True)
 def pasta_dados(tmp_path, monkeypatch):
     monkeypatch.setattr(repositorio, "DATA_DIR", tmp_path)
     monkeypatch.setattr(personagem_repositorio, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(mundo_repositorio, "DATA_DIR", tmp_path)
     monkeypatch.setattr(ficha_repositorio, "DATA_DIR", tmp_path)
 
 
@@ -21,10 +23,12 @@ def test_personagem_e_reutilizado_sem_criar_ficha_padrao():
         historico="Viajante", ficha_completa="## HABILIDADES\nObservadora",
     )
     personagem_repositorio.salvar(personagem)
+    mundo = Mundo(id="mundo_teste", nome="Mundo teste")
+    mundo_repositorio.salvar(mundo)
 
-    estado = asyncio.run(criar_campanha(CriarPersonagemRequest(personagem_id=personagem.id)))
+    estado = asyncio.run(criar_campanha(CriarPersonagemRequest(personagem_id=personagem.id, mundo_id=mundo.id)))
 
     assert estado.jogador.personagem_id == personagem.id
     assert estado.jogador.nome == "Lia"
     assert estado.jogador.ficha_estruturada["habilidades"] == "Observadora"
-    assert ficha_repositorio.listar(estado.campanha_id) == []
+    assert ficha_repositorio.listar(f"campanha_{estado.campanha_id}") == []

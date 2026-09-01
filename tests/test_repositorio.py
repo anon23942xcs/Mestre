@@ -14,7 +14,7 @@ def pasta_dados(tmp_path, monkeypatch):
 def test_salvar_carregar_e_listar():
     estado = criar_estado_inicial(
         repositorio.novo_id(),
-        Jogador(nome="Kael", idade=30, genero="M", aparencia="cicatriz", historico="ex-soldado"),
+        Jogador(personagem_id="p_123", nome="Kael", idade=30, genero="M", aparencia="cicatriz", historico="ex-soldado"),
     )
     repositorio.salvar(estado)
     carregado = repositorio.carregar(estado.campanha_id)
@@ -22,6 +22,7 @@ def test_salvar_carregar_e_listar():
     assert carregado.jogador.nome == "Kael"
     lista = repositorio.listar()
     assert lista[0]["nome_jogador"] == "Kael"
+    assert lista[0]["personagem_id"] == "p_123"
 
 
 def test_path_traversal_e_rejeitado():

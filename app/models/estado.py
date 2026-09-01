@@ -91,15 +91,16 @@ class ConfiguracaoMundo(BaseModel):
     sistema_id: str = "d20"
     d10_limiar_sucesso: int = 6
     d10_pontos_atributos: List[int] = Field(default_factory=lambda: [4, 3, 2])
-    cenario: str = "Uma aventura de fantasia medieval no reino de Valdris."
+    cenario: str = "Um mundo à espera de uma história."
     personalidade: str = "Um Mestre imparcial, descritivo e atento às escolhas do jogador."
-    primeira_mensagem: str = "Bem-vindo a Alderan, viajante. O que você deseja fazer?"
-    dialogos_exemplo: str = "*A estalajadeira cruza os braços.* \"O que vai pedir?\""
+    primeira_mensagem: str = "A aventura começa. O que você deseja fazer?"
+    dialogos_exemplo: str = "*O mundo responde às escolhas do personagem.*"
 
 
 class EstadoCompleto(BaseModel):
     campanha_id: str
-    mundo: str = "Fantasia Medieval - Alderan, Reino de Valdris"
+    mundo_id: Optional[str] = None
+    mundo: str = "Mundo sem título"
     configuracao_mundo: ConfiguracaoMundo = Field(default_factory=ConfiguracaoMundo)
     jogador: Jogador
     estado: Estado

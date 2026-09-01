@@ -12,6 +12,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
 from app.models.estado import EstadoCompleto
+from app.models.estado import ConfiguracaoMundo
 from app.models.ficha import TipoFicha
 from app.systems.base import ResultadoTesteGenerico
 
@@ -34,6 +35,7 @@ class CriarPersonagemRequest(PersonagemRequest):
     # Quando informado, o perfil salvo substitui os campos de identidade
     # acima. Os campos permanecem no contrato para manter clientes antigos.
     personagem_id: Optional[str] = Field(default=None, max_length=80)
+    mundo_id: str = Field(min_length=1, max_length=80)
     nome: str = Field(default="", max_length=80)
     idade: int = Field(default=20, ge=1, le=200)
     genero: str = Field(default="", max_length=40)
@@ -91,6 +93,12 @@ class FichaMundoRequest(BaseModel):
     campos: dict = Field(default_factory=dict)
     imagem: str = Field(default="", max_length=2000)
     tags: list[str] = Field(default_factory=list, max_length=30)
+
+
+class MundoRequest(BaseModel):
+    nome: str = Field(min_length=1, max_length=160)
+    descricao: str = Field(default="", max_length=4000)
+    configuracao: ConfiguracaoMundo = Field(default_factory=ConfiguracaoMundo)
 
 
 class PresencaNPCRequest(BaseModel):

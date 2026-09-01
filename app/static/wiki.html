@@ -1,39 +1,808 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Mestre — Wiki</title>
   <style>
-    :root { color-scheme: dark; } * { box-sizing: border-box; } body { margin: 0; font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; }
-    .layout { min-height: 100vh; display: grid; grid-template-columns: 230px 1fr; } aside { padding: 24px 16px; background: #16213e; border-right: 1px solid #345; }
-    h1 { color: #e94560; font-size: 26px; margin: 0 0 4px; } .voltar { color: #f4d35e; font-size: 13px; } .categorias { margin-top: 28px; display: grid; gap: 5px; }
-    .categoria { border: 0; background: transparent; color: #ccd; padding: 10px; text-align: left; border-radius: 5px; cursor: pointer; font-size: 15px; } .categoria:hover, .categoria.ativa { background: #0f3460; color: #fff; }
-    main { padding: 30px; max-width: 1300px; width: 100%; } .cabecalho { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-    .botao { border: 0; border-radius: 5px; padding: 10px 14px; color: white; background: #e94560; cursor: pointer; font-size: 14px; } .botao.secundario { background: transparent; color: #8fd694; border: 1px solid #8fd694; }
-    .catalogo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 22px 0; } .ficha-card { display: block; padding: 15px; border-radius: 7px; background: #0f3460; color: inherit; text-decoration: none; border: 1px solid transparent; } .ficha-card:hover { border-color: #e94560; } .ficha-card a { display: block; color: inherit; text-decoration: none; }
-    .ficha-card small { color: #f4d35e; } .ficha-card h3 { margin: 7px 0; } .ficha-card p { color: #ccd; font-size: 14px; } .vazio, .erro { padding: 20px; background: #16213e; border-radius: 7px; color: #b8b8d1; } .erro { color: #ffabb5; }
-    dialog { width: min(680px, 94vw); border: 1px solid #e94560; border-radius: 9px; color: #eee; background: #16213e; padding: 24px; } dialog::backdrop { background: #000a; } form { display: grid; gap: 8px; } label { color: #b8b8d1; font-size: 13px; margin-top: 5px; } input, textarea, select { width: 100%; padding: 9px; border: 1px solid #345; border-radius: 4px; background: #0f3460; color: white; font: inherit; } textarea { min-height: 72px; } .form-acoes { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; } #form-status { min-height: 18px; color: #f4d35e; font-size: 13px; }
-    @media (max-width: 700px) { .layout { grid-template-columns: 1fr; } aside { border-right: 0; border-bottom: 1px solid #345; } .categorias { grid-template-columns: repeat(3, 1fr); margin-top: 14px; } main { padding: 20px; } }
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    .layout {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+    }
+    aside {
+      padding: 24px 16px;
+      background: #16213e;
+      border-right: 1px solid #244b77;
+      display: flex;
+      flex-direction: column;
+      max-height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow-y: auto;
+    }
+    h1 {
+      color: #e94560;
+      font-size: 26px;
+      margin: 0 0 4px;
+    }
+    .voltar {
+      color: #f4d35e;
+      font-size: 13px;
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+    .voltar:hover { text-decoration: underline; }
+    .categorias {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .categoria-bloco {
+      display: flex;
+      flex-direction: column;
+    }
+    .categoria-header {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #ccd;
+      padding: 9px 12px;
+      text-align: left;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .categoria-header:hover, .categoria-header.ativa {
+      background: #0f3460;
+      color: #fff;
+    }
+    .categoria-titulo-bloco {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .seta {
+      font-size: 11px;
+      color: #f4d35e;
+      transition: transform 0.15s ease;
+      display: inline-block;
+      width: 12px;
+    }
+    .contador-badge {
+      font-size: 12px;
+      color: #8fd694;
+      font-weight: normal;
+    }
+    .categoria-itens {
+      padding-left: 20px;
+      margin: 4px 0 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .item-btn {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #b8b8d1;
+      padding: 7px 10px;
+      text-align: left;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: all 0.15s ease;
+      display: block;
+    }
+    .item-btn:hover {
+      background: #0f3460;
+      color: #ffffff;
+    }
+    .item-btn.ativo {
+      background: #0f3460;
+      color: #ffffff;
+      border-left: 3px solid #e94560;
+      font-weight: bold;
+    }
+    .sem-itens {
+      padding: 6px 10px;
+      font-size: 12px;
+      color: #788;
+      font-style: italic;
+    }
+    main {
+      padding: 30px;
+      max-width: 1300px;
+      width: 100%;
+    }
+    .cabecalho {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .cabecalho h2 { margin: 0; font-size: 24px; color: #fff; }
+    .cabecalho p { margin: 4px 0 0; color: #b8b8d1; font-size: 14px; }
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #b8b8d1;
+      font-size: 13.5px;
+      margin-bottom: 16px;
+    }
+    .breadcrumb a, .breadcrumb button {
+      color: #f4d35e;
+      text-decoration: none;
+      background: transparent;
+      border: 0;
+      padding: 0;
+      font: inherit;
+      cursor: pointer;
+    }
+    .breadcrumb a:hover, .breadcrumb button:hover { text-decoration: underline; }
+    .botao {
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 16px;
+      color: white;
+      background: #e94560;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: background 0.15s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .botao:hover { background: #d33a53; }
+    .botao.secundario {
+      background: transparent;
+      color: #8fd694;
+      border: 1px solid #8fd694;
+    }
+    .botao.secundario:hover {
+      background: rgba(143, 214, 148, 0.12);
+    }
+    .botao.perigo {
+      background: transparent;
+      color: #ffabb5;
+      border: 1px solid #e94560;
+    }
+    .botao.perigo:hover {
+      background: rgba(233, 69, 96, 0.16);
+      color: #fff;
+    }
+    /* Grade de cards */
+    .catalogo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .ficha-card {
+      display: flex;
+      flex-direction: column;
+      padding: 18px;
+      border-radius: 10px;
+      background: #0f3460;
+      color: inherit;
+      border: 1px solid #244b77;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .ficha-card:hover {
+      border-color: #e94560;
+      transform: translateY(-3px);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.4);
+    }
+    .ficha-card small {
+      color: #f4d35e;
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 4px;
+    }
+    .ficha-card h3 {
+      margin: 4px 0 8px;
+      font-size: 18px;
+      color: #ffffff;
+    }
+    .ficha-card p {
+      color: #b8b8d1;
+      font-size: 13.5px;
+      line-height: 1.45;
+      margin: 0 0 12px;
+      flex: 1;
+    }
+    .ficha-card-img {
+      width: 100%;
+      height: 130px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      border: 1px solid #244b77;
+    }
+    /* Painel de Perfil / Detalhe */
+    .painel-perfil {
+      background: #16213e;
+      border: 1px solid #244b77;
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+    }
+    .perfil-layout {
+      display: grid;
+      grid-template-columns: minmax(200px, 300px) 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+    .perfil-col-imagem {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .perfil-imagem {
+      width: 100%;
+      max-height: 420px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid #244b77;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+    .perfil-col-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .perfil-tag-categoria {
+      color: #f4d35e;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+    .perfil-nome {
+      color: #ffffff;
+      font-size: 28px;
+      margin: 0 0 12px;
+      line-height: 1.25;
+    }
+    .perfil-resumo {
+      color: #ccd;
+      font-size: 15px;
+      line-height: 1.5;
+      margin: 0 0 16px;
+      padding: 10px 14px;
+      background: #0f3460;
+      border-left: 3px solid #e94560;
+      border-radius: 0 6px 6px 0;
+      font-style: italic;
+    }
+    .tags-container {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .badge-tag {
+      background: #0f3460;
+      color: #f4d35e;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      border: 1px solid #244b77;
+    }
+    .perfil-secao-titulo {
+      color: #f4d35e;
+      font-size: 15px;
+      margin: 20px 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #244b77;
+      padding-bottom: 4px;
+    }
+    .perfil-texto {
+      color: #eee;
+      font-size: 14.5px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .campos-tabela {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    .campos-tabela th, .campos-tabela td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid #244b77;
+    }
+    .campos-tabela th {
+      color: #b8b8d1;
+      font-size: 13px;
+      width: 32%;
+    }
+    .campos-tabela td {
+      color: #ffffff;
+      font-size: 13.5px;
+    }
+    .relacoes-container {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .badge-relacao {
+      background: #0f3460;
+      color: #8fd694;
+      border: 1px solid #8fd694;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s ease;
+    }
+    .badge-relacao:hover {
+      background: rgba(143, 214, 148, 0.15);
+    }
+    .perfil-acoes {
+      display: flex;
+      gap: 10px;
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid #244b77;
+      flex-wrap: wrap;
+    }
+    .vazio, .erro {
+      padding: 24px;
+      background: #16213e;
+      border-radius: 10px;
+      color: #b8b8d1;
+      border: 1px solid #244b77;
+    }
+    .erro { color: #ffabb5; border-color: #e94560; }
+    /* Modal Editor */
+    dialog {
+      width: min(680px, 94vw);
+      border: 1px solid #e94560;
+      border-radius: 12px;
+      color: #eee;
+      background: #16213e;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+    dialog::backdrop { background: rgba(0, 0, 0, 0.75); }
+    form { display: grid; gap: 10px; }
+    label { color: #b8b8d1; font-size: 13px; margin-top: 4px; font-weight: bold; }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #345;
+      border-radius: 6px;
+      background: #0f3460;
+      color: white;
+      font: inherit;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #e94560;
+    }
+    textarea { min-height: 75px; resize: vertical; }
+    .form-acoes { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
+    #form-status { min-height: 18px; color: #f4d35e; font-size: 13px; }
+    @media (max-width: 850px) {
+      .layout { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid #244b77; position: relative; max-height: none; }
+      .perfil-layout { grid-template-columns: 1fr; }
+      main { padding: 20px; }
+    }
   </style>
 </head>
 <body>
-  <div class="layout"><aside><h1>Mestre</h1><a class="voltar" href="/">← Campanhas</a><div class="categorias" id="categorias"></div></aside>
-    <main><div class="cabecalho"><div><h2 id="titulo-categoria">Personagens</h2><p id="subtitulo">Fichas canônicas do mundo.</p></div><button class="botao" id="nova-ficha">Nova ficha</button></div><div id="fichas" class="catalogo-grid" aria-live="polite">Carregando fichas…</div></main>
+  <div class="layout">
+    <aside>
+      <h1>Mestre</h1>
+      <a class="voltar" id="voltar" href="/">← Campanhas</a>
+      <div class="categorias" id="categorias"></div>
+    </aside>
+    <main id="conteudo-principal">
+      <div class="cabecalho">
+        <div>
+          <h2 id="titulo-categoria">Personagens</h2>
+          <p id="subtitulo">Fichas canônicas do mundo.</p>
+        </div>
+        <button class="botao" id="nova-ficha">+ Nova ficha</button>
+      </div>
+      <div id="fichas" class="catalogo-grid" aria-live="polite">Carregando fichas…</div>
+    </main>
   </div>
-  <dialog id="editor"><form id="form-ficha"><div class="cabecalho"><h2 id="editor-titulo">Nova ficha</h2><button type="button" class="botao secundario" id="fechar-editor">Fechar</button></div>
-    <label>Tipo<select id="ficha-tipo"></select></label><label>Título<input id="ficha-titulo" required maxlength="160"></label><label>Resumo<textarea id="ficha-resumo" maxlength="1000"></textarea></label><label>Conteúdo<textarea id="ficha-conteudo" maxlength="30000"></textarea></label><label>Campos estruturados (JSON)<textarea id="ficha-campos" placeholder='{"região":"Norte"}'></textarea></label><label>URL da imagem<input id="ficha-imagem" maxlength="2000"></label><label>Tags (separadas por vírgula)<input id="ficha-tags"></label><div id="form-status"></div><div class="form-acoes"><button type="submit" class="botao">Salvar ficha</button></div></form></dialog>
+
+  <dialog id="editor">
+    <form id="form-ficha">
+      <div class="cabecalho">
+        <h2 id="editor-titulo">Nova ficha</h2>
+        <button type="button" class="botao secundario" id="fechar-editor">Fechar</button>
+      </div>
+      <label>Tipo
+        <select id="ficha-tipo"></select>
+      </label>
+      <label>Título
+        <input id="ficha-titulo" required maxlength="160">
+      </label>
+      <label>Resumo
+        <textarea id="ficha-resumo" maxlength="1000"></textarea>
+      </label>
+      <label>Conteúdo
+        <textarea id="ficha-conteudo" maxlength="30000"></textarea>
+      </label>
+      <label>Campos estruturados (JSON)
+        <textarea id="ficha-campos" placeholder='{"região":"Norte"}'></textarea>
+      </label>
+      <label>URL da imagem
+        <input id="ficha-imagem" maxlength="2000" placeholder="https://exemplo.com/imagem.png">
+      </label>
+      <label>Tags (separadas por vírgula)
+        <input id="ficha-tags" placeholder="Guerreiro, Humano, Nobre">
+      </label>
+      <div id="form-status"></div>
+      <div class="form-acoes">
+        <button type="submit" class="botao">Salvar ficha</button>
+      </div>
+    </form>
+  </dialog>
+
   <script>
-    const tipos = [['personagem','Personagens'],['local','Locais'],['raca','Raças'],['item','Itens'],['organizacao','Organizações'],['evento','Eventos'],['criatura','Criaturas'],['divindade','Divindades'],['conceito','Conceitos']];
-    const partes = window.location.pathname.split('/').filter(Boolean); const campanhaId = partes[1]; let fichas = [], tipoAtual = tipos[0][0], fichaEditando = null;
-    const esc = valor => { const el = document.createElement('span'); el.textContent = valor == null ? '' : String(valor); return el.innerHTML; };
-    function urlApi(sufixo = '') { return `/campanhas/${encodeURIComponent(campanhaId)}/catalogo${sufixo}`; }
-    function configurarCategorias() { const area = document.getElementById('categorias'); const select = document.getElementById('ficha-tipo'); select.innerHTML = tipos.map(([id,nome]) => `<option value="${id}">${nome}</option>`).join(''); area.innerHTML = tipos.map(([id,nome]) => `<button class="categoria" data-tipo="${id}">${nome}</button>`).join(''); area.addEventListener('click', evento => { const botao = evento.target.closest('[data-tipo]'); if (!botao) return; tipoAtual = botao.dataset.tipo; renderizar(); }); }
-    function renderizar() { const [, nome] = tipos.find(([id]) => id === tipoAtual); document.getElementById('titulo-categoria').textContent = nome; document.querySelectorAll('.categoria').forEach(botao => botao.classList.toggle('ativa', botao.dataset.tipo === tipoAtual)); const area = document.getElementById('fichas'); const grupo = fichas.filter(ficha => ficha.tipo === tipoAtual); if (!grupo.length) { area.className = 'vazio'; area.textContent = `Nenhuma ficha de ${nome.toLowerCase()} ainda.`; return; } area.className = 'catalogo-grid'; area.innerHTML = grupo.map(ficha => `<article class="ficha-card"><a href="/campanhas/${encodeURIComponent(campanhaId)}/wiki/${encodeURIComponent(ficha.id)}"><small>${esc(nome.slice(0, -1) || nome)}</small><h3>${esc(ficha.titulo)}</h3><p>${esc(ficha.resumo || 'Sem resumo')}</p></a><button class="botao secundario editar-ficha" data-id="${esc(ficha.id)}">Editar</button></article>`).join(''); area.querySelectorAll('.editar-ficha').forEach(botao => botao.onclick = () => abrirEditor(fichas.find(ficha => ficha.id === botao.dataset.id))); }
-    async function carregar() { const area = document.getElementById('fichas'); try { const resposta = await fetch(urlApi()); if (!resposta.ok) throw new Error(resposta.status === 404 ? 'Campanha não encontrada.' : 'Não foi possível carregar a Wiki.'); fichas = await resposta.json(); renderizar(); } catch (erro) { area.className = 'erro'; area.textContent = erro.message; } }
-    function abrirEditor(ficha = null) { fichaEditando = ficha; document.getElementById('editor-titulo').textContent = ficha ? 'Editar ficha' : 'Nova ficha'; document.getElementById('ficha-tipo').value = ficha?.tipo || tipoAtual; document.getElementById('ficha-titulo').value = ficha?.titulo || ''; document.getElementById('ficha-resumo').value = ficha?.resumo || ''; document.getElementById('ficha-conteudo').value = ficha?.conteudo || ''; document.getElementById('ficha-campos').value = JSON.stringify(ficha?.campos || {}, null, 2); document.getElementById('ficha-imagem').value = ficha?.imagem || ''; document.getElementById('ficha-tags').value = (ficha?.tags || []).join(', '); document.getElementById('form-status').textContent = ''; document.getElementById('editor').showModal(); }
-    document.getElementById('nova-ficha').onclick = () => abrirEditor(); document.getElementById('fechar-editor').onclick = () => document.getElementById('editor').close();
-    document.getElementById('form-ficha').onsubmit = async evento => { evento.preventDefault(); let campos; const status = document.getElementById('form-status'); try { campos = JSON.parse(document.getElementById('ficha-campos').value || '{}'); } catch { status.textContent = 'Os campos estruturados precisam ser um JSON válido.'; return; } const dados = { tipo: document.getElementById('ficha-tipo').value, titulo: document.getElementById('ficha-titulo').value.trim(), resumo: document.getElementById('ficha-resumo').value.trim(), conteudo: document.getElementById('ficha-conteudo').value.trim(), campos, imagem: document.getElementById('ficha-imagem').value.trim(), tags: document.getElementById('ficha-tags').value.split(',').map(tag => tag.trim()).filter(Boolean) }; const resposta = await fetch(urlApi(fichaEditando ? `/${encodeURIComponent(fichaEditando.id)}` : ''), { method: fichaEditando ? 'PUT' : 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(dados) }); if (!resposta.ok) { const erro = await resposta.json().catch(() => ({})); status.textContent = erro.detail || 'Não foi possível salvar a ficha.'; return; } document.getElementById('editor').close(); tipoAtual = dados.tipo; await carregar(); };
-    configurarCategorias(); carregar();
+    const tipos = [
+      ['personagem', 'Personagens', 'Personagem'],
+      ['local', 'Locais', 'Local'],
+      ['raca', 'Raças', 'Raça'],
+      ['item', 'Itens', 'Item'],
+      ['organizacao', 'Organizações', 'Organização'],
+      ['evento', 'Eventos', 'Evento'],
+      ['criatura', 'Criaturas', 'Criatura'],
+      ['divindade', 'Divindades', 'Divindade'],
+      ['conceito', 'Conceitos', 'Conceito']
+    ];
+
+    const partes = window.location.pathname.split('/').filter(Boolean);
+    const contexto = partes[0], escopoId = partes[1];
+    const eMundo = contexto === 'mundos';
+
+    let fichas = [];
+    let tipoAtual = tipos[0][0];
+    let fichaSelecionadaId = partes[3] || null;
+    let fichaEditando = null;
+    let categoriasExpandidas = { [tipoAtual]: true };
+
+    const esc = valor => {
+      const el = document.createElement('span');
+      el.textContent = valor == null ? '' : String(valor);
+      return el.innerHTML;
+    };
+
+    document.getElementById('voltar').href = eMundo ? '/mundos' : '/';
+    document.getElementById('voltar').textContent = eMundo ? '← Voltar para Mundos' : '← Voltar para Campanhas';
+    document.getElementById('subtitulo').textContent = eMundo ? 'Fichas canônicas deste mundo.' : 'Fichas desta campanha.';
+
+    function urlApi(sufixo = '') {
+      return eMundo
+        ? `/api/mundos/${encodeURIComponent(escopoId)}/fichas${sufixo}`
+        : `/campanhas/${encodeURIComponent(escopoId)}/catalogo${sufixo}`;
+    }
+
+    function toggleCategoria(tipoId) {
+      categoriasExpandidas[tipoId] = !categoriasExpandidas[tipoId];
+      tipoAtual = tipoId;
+      renderizarSidebar();
+    }
+
+    function selecionarFicha(id) {
+      fichaSelecionadaId = id;
+      const f = fichas.find(item => item.id === id);
+      if (f) {
+        tipoAtual = f.tipo;
+        categoriasExpandidas[f.tipo] = true;
+      }
+      renderizar();
+    }
+
+    function verGradeCategoria(tipoId) {
+      tipoAtual = tipoId;
+      fichaSelecionadaId = null;
+      categoriasExpandidas[tipoId] = true;
+      renderizar();
+    }
+
+    function renderizarSidebar() {
+      const area = document.getElementById('categorias');
+      area.innerHTML = tipos.map(([id, nomePlural]) => {
+        const itensDaCategoria = fichas.filter(f => f.tipo === id);
+        const contagem = itensDaCategoria.length;
+        const expandida = !!categoriasExpandidas[id];
+        const ehAtiva = tipoAtual === id;
+
+        let itensHtml = '';
+        if (expandida) {
+          if (itensDaCategoria.length === 0) {
+            itensHtml = `<div class="categoria-itens"><span class="sem-itens">Nenhuma ficha</span></div>`;
+          } else {
+            itensHtml = `<div class="categoria-itens">` +
+              itensDaCategoria.map(f => {
+                const ativo = f.id === fichaSelecionadaId ? ' ativo' : '';
+                return `<button type="button" class="item-btn${ativo}" onclick="selecionarFicha('${esc(f.id)}')">${esc(f.titulo)}</button>`;
+              }).join('') +
+            `</div>`;
+          }
+        }
+
+        return `<div class="categoria-bloco">
+          <button type="button" class="categoria-header${ehAtiva ? ' ativa' : ''}" onclick="toggleCategoria('${id}')">
+            <span class="categoria-titulo-bloco">
+              <span class="seta">${expandida ? '▼' : '▶'}</span>
+              <span>${esc(nomePlural)}</span>
+            </span>
+            <span class="contador-badge">(${contagem})</span>
+          </button>
+          ${itensHtml}
+        </div>`;
+      }).join('');
+    }
+
+    function renderizarPainelPerfil(ficha) {
+      const [, nomePlural, nomeSingular] = tipos.find(([id]) => id === ficha.tipo) || [ficha.tipo, ficha.tipo, ficha.tipo];
+      const main = document.getElementById('conteudo-principal');
+
+      const tagsHtml = (ficha.tags || []).length > 0
+        ? `<div class="tags-container">${ficha.tags.map(t => `<span class="badge-tag">${esc(t)}</span>`).join('')}</div>`
+        : '';
+
+      const camposEntries = Object.entries(ficha.campos || {});
+      const camposHtml = camposEntries.length > 0
+        ? `<h3 class="perfil-secao-titulo">Campos Estruturados</h3>
+           <table class="campos-tabela">
+             ${camposEntries.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(typeof v === 'object' ? JSON.stringify(v) : v)}</td></tr>`).join('')}
+           </table>`
+        : '';
+
+      const nomesMap = new Map(fichas.map(f => [f.id, f.titulo]));
+      const relacoesEntries = Object.entries(ficha.relacoes || {});
+      const relacoesHtml = relacoesEntries.length > 0
+        ? `<h3 class="perfil-secao-titulo">Relações</h3>
+           <div class="relacoes-container">
+             ${relacoesEntries.flatMap(([tipoRel, ids]) => ids.map(id => {
+               const tituloDestino = nomesMap.get(id) || id;
+               return `<button type="button" class="badge-relacao" onclick="selecionarFicha('${esc(id)}')">${esc(tipoRel)}: ${esc(tituloDestino)}</button>`;
+             })).join('')}
+           </div>`
+        : '';
+
+      const imagemHtml = ficha.imagem
+        ? `<div class="perfil-col-imagem">
+             <img class="perfil-imagem" src="${esc(ficha.imagem)}" alt="${esc(ficha.titulo)}" onerror="this.style.display='none'">
+           </div>`
+        : '';
+
+      main.innerHTML = `
+        <div class="breadcrumb">
+          <button type="button" onclick="verGradeCategoria('${esc(ficha.tipo)}')">${esc(nomePlural)}</button>
+          <span>&gt;&gt;</span>
+          <span style="color:#ffffff;font-weight:bold;">${esc(ficha.titulo)}</span>
+        </div>
+
+        <article class="painel-perfil">
+          <div class="perfil-layout"${!ficha.imagem ? ' style="grid-template-columns:1fr;"' : ''}>
+            ${imagemHtml}
+            <div class="perfil-col-info">
+              <span class="perfil-tag-categoria">${esc(nomeSingular)}</span>
+              <h1 class="perfil-nome">${esc(ficha.titulo)}</h1>
+              ${ficha.resumo ? `<p class="perfil-resumo">${esc(ficha.resumo)}</p>` : ''}
+              ${tagsHtml}
+              
+              <h3 class="perfil-secao-titulo">Descrição</h3>
+              <div class="perfil-texto">${esc(ficha.conteudo || 'Sem descrição detalhada.')}</div>
+
+              ${camposHtml}
+              ${relacoesHtml}
+            </div>
+          </div>
+
+          <div class="perfil-acoes">
+            <button type="button" class="botao" id="btn-editar-ficha">Editar ficha</button>
+            <button type="button" class="botao secundario" onclick="abrirEditor(null, '${esc(ficha.tipo)}')">+ Nova ficha</button>
+            <button type="button" class="botao secundario" onclick="verGradeCategoria('${esc(ficha.tipo)}')">Ver todas em grade</button>
+            <button type="button" class="botao perigo" id="btn-apagar-ficha">Apagar ficha</button>
+          </div>
+        </article>
+      `;
+
+      document.getElementById('btn-editar-ficha').onclick = () => abrirEditor(ficha);
+      document.getElementById('btn-apagar-ficha').onclick = () => apagarFicha(ficha.id);
+    }
+
+    function renderizarGrade() {
+      const [, nomePlural, nomeSingular] = tipos.find(([id]) => id === tipoAtual) || [tipoAtual, tipoAtual, tipoAtual];
+      const main = document.getElementById('conteudo-principal');
+      const grupo = fichas.filter(ficha => ficha.tipo === tipoAtual);
+
+      let cardsHtml = '';
+      if (!grupo.length) {
+        cardsHtml = `<div class="vazio">Nenhuma ficha de ${nomePlural.toLowerCase()} cadastrada ainda.</div>`;
+      } else {
+        cardsHtml = `<div class="catalogo-grid">` +
+          grupo.map(ficha => `
+            <article class="ficha-card" onclick="selecionarFicha('${esc(ficha.id)}')">
+              ${ficha.imagem ? `<img class="ficha-card-img" src="${esc(ficha.imagem)}" alt="${esc(ficha.titulo)}" onerror="this.style.display='none'">` : ''}
+              <small>${esc(nomeSingular)}</small>
+              <h3>${esc(ficha.titulo)}</h3>
+              <p>${esc(ficha.resumo || 'Sem resumo cadastrado.')}</p>
+              <div class="acoes" style="margin-top:auto;">
+                <button type="button" class="botao secundario" style="width:100%;font-size:13px;" onclick="event.stopPropagation(); selecionarFicha('${esc(ficha.id)}')">Ver detalhes</button>
+              </div>
+            </article>
+          `).join('') +
+        `</div>`;
+      }
+
+      main.innerHTML = `
+        <div class="cabecalho">
+          <div>
+            <h2>${esc(nomePlural)}</h2>
+            <p>${eMundo ? 'Fichas canônicas deste mundo.' : 'Fichas desta campanha.'}</p>
+          </div>
+          <button type="button" class="botao" id="nova-ficha">+ Nova ficha</button>
+        </div>
+        ${cardsHtml}
+      `;
+
+      document.getElementById('nova-ficha').onclick = () => abrirEditor(null, tipoAtual);
+    }
+
+    function renderizar() {
+      renderizarSidebar();
+      if (fichaSelecionadaId) {
+        const ficha = fichas.find(f => f.id === fichaSelecionadaId);
+        if (ficha) {
+          renderizarPainelPerfil(ficha);
+          return;
+        }
+      }
+      renderizarGrade();
+    }
+
+    async function carregar() {
+      const area = document.getElementById('fichas');
+      try {
+        const resposta = await fetch(urlApi());
+        if (!resposta.ok) {
+          throw new Error(resposta.status === 404 ? `${eMundo ? 'Mundo' : 'Campanha'} não encontrado.` : 'Não foi possível carregar a Wiki.');
+        }
+        fichas = await resposta.json();
+        
+        // Se tinha ID na URL ou se nenhuma selecionada, manter estado
+        if (fichaSelecionadaId && !fichas.some(f => f.id === fichaSelecionadaId)) {
+          fichaSelecionadaId = null;
+        }
+        
+        renderizar();
+      } catch (erro) {
+        const main = document.getElementById('conteudo-principal');
+        main.innerHTML = `<div class="erro">${esc(erro.message)}</div>`;
+      }
+    }
+
+    function abrirEditor(ficha = null, tipoPredefinido = null) {
+      fichaEditando = ficha;
+      document.getElementById('editor-titulo').textContent = ficha ? 'Editar ficha' : 'Nova ficha';
+      
+      const selectTipo = document.getElementById('ficha-tipo');
+      selectTipo.innerHTML = tipos.map(([id, nomePlural, nomeSingular]) => `<option value="${id}">${nomeSingular}</option>`).join('');
+      selectTipo.value = ficha?.tipo || tipoPredefinido || tipoAtual;
+
+      document.getElementById('ficha-titulo').value = ficha?.titulo || '';
+      document.getElementById('ficha-resumo').value = ficha?.resumo || '';
+      document.getElementById('ficha-conteudo').value = ficha?.conteudo || '';
+      document.getElementById('ficha-campos').value = JSON.stringify(ficha?.campos || {}, null, 2);
+      document.getElementById('ficha-imagem').value = ficha?.imagem || '';
+      document.getElementById('ficha-tags').value = (ficha?.tags || []).join(', ');
+      document.getElementById('form-status').textContent = '';
+      document.getElementById('editor').showModal();
+    }
+
+    async function apagarFicha(fichaId) {
+      if (!confirm('Deseja realmente apagar esta ficha?')) return;
+      try {
+        const resp = await fetch(urlApi(`/${encodeURIComponent(fichaId)}`), { method: 'DELETE' });
+        if (!resp.ok) throw new Error('Não foi possível apagar a ficha.');
+        fichas = fichas.filter(f => f.id !== fichaId);
+        fichaSelecionadaId = null;
+        renderizar();
+      } catch (e) {
+        alert(e.message || 'Erro ao apagar ficha.');
+      }
+    }
+
+    document.getElementById('fechar-editor').onclick = () => document.getElementById('editor').close();
+
+    document.getElementById('form-ficha').onsubmit = async evento => {
+      evento.preventDefault();
+      let campos;
+      const status = document.getElementById('form-status');
+      try {
+        campos = JSON.parse(document.getElementById('ficha-campos').value || '{}');
+      } catch {
+        status.textContent = 'Os campos estruturados precisam ser um JSON válido.';
+        return;
+      }
+
+      const dados = {
+        tipo: document.getElementById('ficha-tipo').value,
+        titulo: document.getElementById('ficha-titulo').value.trim(),
+        resumo: document.getElementById('ficha-resumo').value.trim(),
+        conteudo: document.getElementById('ficha-conteudo').value.trim(),
+        campos,
+        imagem: document.getElementById('ficha-imagem').value.trim(),
+        tags: document.getElementById('ficha-tags').value.split(',').map(tag => tag.trim()).filter(Boolean)
+      };
+
+      const url = urlApi(fichaEditando ? `/${encodeURIComponent(fichaEditando.id)}` : '');
+      const metodo = fichaEditando ? 'PUT' : 'POST';
+
+      try {
+        const resposta = await fetch(url, {
+          method: metodo,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dados)
+        });
+
+        if (!resposta.ok) {
+          const erro = await resposta.json().catch(() => ({}));
+          status.textContent = erro.detail || 'Não foi possível salvar a ficha.';
+          return;
+        }
+
+        const fichaSalva = await resposta.json();
+        document.getElementById('editor').close();
+        
+        tipoAtual = fichaSalva.tipo;
+        categoriasExpandidas[tipoAtual] = true;
+        fichaSelecionadaId = fichaSalva.id;
+        
+        await carregar();
+      } catch (err) {
+        status.textContent = 'Erro ao conectar ao servidor.';
+      }
+    };
+
+    carregar();
   </script>
 </body>
 </html>

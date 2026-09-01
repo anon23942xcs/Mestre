@@ -99,6 +99,9 @@ def listar() -> list[dict]:
                 dados = json.load(f)
             resumos.append({
                 "campanha_id": dados.get("campanha_id", caminho.stem),
+                "mundo_id": dados.get("mundo_id"),
+                "mundo": dados.get("mundo", "Mundo não identificado"),
+                "personagem_id": dados.get("jogador", {}).get("personagem_id"),
                 "nome_jogador": dados.get("jogador", {}).get("nome", "?"),
                 "local": dados.get("estado", {}).get("local", "?"),
                 "turno": dados.get("turno", 0),

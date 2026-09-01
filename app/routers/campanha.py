@@ -13,7 +13,7 @@ vez do antigo arquivo global único.
 """
 from fastapi import APIRouter, HTTPException
 
-from app.models.estado import ConfiguracaoMundo, EstadoCompleto, Jogador
+from app.models.estado import EstadoCompleto, Jogador
 from app.models.requests import (
     AcaoRequest,
     CriarPersonagemRequest,
@@ -24,7 +24,7 @@ from app.services import pipeline
 from app.services.estado_inicial import criar_estado_inicial
 from app.services.fichas_jogador import organizar_ficha_markdown
 from app.services.ia_client import ErroIA
-from app.storage import personagem_repositorio, repositorio
+from app.storage import ficha_repositorio, mundo_repositorio, personagem_repositorio, repositorio
 from app.systems.sistema_d10 import construir_ficha
 
 router = APIRouter(prefix="/campanhas", tags=["campanhas"])
@@ -38,6 +38,9 @@ async def listar_campanhas():
 @router.post("", response_model=EstadoCompleto)
 async def criar_campanha(dados: CriarPersonagemRequest):
     campanha_id = repositorio.novo_id()
+    mundo = mundo_repositorio.carregar(dados.mundo_id)
+    if not mundo:
+        raise HTTPException(status_code=404, detail="Mundo não encontrado")
     personagem = None
     if dados.personagem_id:
         personagem = personagem_repositorio.carregar(dados.personagem_id)
@@ -55,21 +58,15 @@ async def criar_campanha(dados: CriarPersonagemRequest):
             ficha_completa=(personagem.ficha_completa if personagem else dados.ficha_completa).strip(),
             ficha_estruturada=organizar_ficha_markdown(personagem.ficha_completa if personagem else dados.ficha_completa),
             ficha_sistema=(
-                construir_ficha(dados.d10_pontos_atributos, dados.d10_atributos_jogador)
-                if dados.sistema_rpg and dados.sistema_id.strip() == "d10" else {}
+                construir_ficha(mundo.configuracao.d10_pontos_atributos, dados.d10_atributos_jogador)
+                if mundo.configuracao.sistema_rpg and mundo.configuracao.sistema_id == "d10" else {}
             ),
         ),
-        ConfiguracaoMundo(
-            sistema_rpg=dados.sistema_rpg,
-            sistema_id=dados.sistema_id.strip() if dados.sistema_rpg else "nenhum",
-            d10_limiar_sucesso=dados.d10_limiar_sucesso,
-            d10_pontos_atributos=dados.d10_pontos_atributos,
-            cenario=dados.cenario.strip() or ConfiguracaoMundo().cenario,
-            personalidade=dados.personalidade_mestre.strip() or ConfiguracaoMundo().personalidade,
-            primeira_mensagem=dados.primeira_mensagem.strip() or ConfiguracaoMundo().primeira_mensagem,
-            dialogos_exemplo=dados.dialogos_exemplo.strip() or ConfiguracaoMundo().dialogos_exemplo,
-        ),
+        mundo.configuracao.model_copy(deep=True),
+        mundo_id=mundo.id,
+        mundo_nome=mundo.nome,
     )
+    ficha_repositorio.copiar_fichas(f"mundo_{mundo.id}", f"campanha_{campanha_id}")
     repositorio.salvar(estado)
     return estado
 
@@ -156,6 +153,5 @@ async def apagar_campanha(campanha_id: str):
         raise HTTPException(status_code=400, detail="campanha_id inválido")
     if not apagado:
         raise HTTPException(status_code=404, detail="Campanha não encontrada")
-    from app.storage import ficha_repositorio
-    ficha_repositorio.deletar_da_campanha(campanha_id)
+    ficha_repositorio.deletar_escopo(f"campanha_{campanha_id}")
     return {"mensagem": "Campanha apagada"}

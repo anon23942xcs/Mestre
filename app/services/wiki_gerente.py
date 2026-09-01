@@ -8,7 +8,8 @@ def aplicar_patch_wiki(estado: EstadoCompleto, patch: object) -> None:
     if not isinstance(patch, dict):
         return
     campanha_id = estado.campanha_id
-    fichas = {f.id: f for f in ficha_repositorio.listar(campanha_id)}
+    escopo = f"campanha_{campanha_id}"
+    fichas = {f.id: f for f in ficha_repositorio.listar(escopo)}
 
     for atualizacao in patch.get("fichas_atualizadas") or []:
         if not isinstance(atualizacao, dict):
@@ -22,7 +23,7 @@ def aplicar_patch_wiki(estado: EstadoCompleto, patch: object) -> None:
         append = atualizacao.get("conteudo_append")
         if isinstance(append, str) and append.strip():
             ficha.conteudo = (ficha.conteudo + "\n\n" + append.strip()).strip()
-        ficha_repositorio.salvar(campanha_id, ficha)
+        ficha_repositorio.salvar(escopo, ficha)
 
     nova = patch.get("ficha_nova")
     if isinstance(nova, dict):
@@ -32,7 +33,7 @@ def aplicar_patch_wiki(estado: EstadoCompleto, patch: object) -> None:
             if dados["id"] in fichas:
                 dados["id"] = ficha_repositorio.novo_id()
             ficha = FichaMundo(**dados)
-            ficha_repositorio.salvar(campanha_id, ficha)
+            ficha_repositorio.salvar(escopo, ficha)
             fichas[ficha.id] = ficha
         except Exception:
             pass
@@ -55,4 +56,4 @@ def aplicar_patch_wiki(estado: EstadoCompleto, patch: object) -> None:
                     origem.relacoes.pop(tipo, None)
             else:
                 continue
-            ficha_repositorio.salvar(campanha_id, origem)
+            ficha_repositorio.salvar(escopo, origem)
