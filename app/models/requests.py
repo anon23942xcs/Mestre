@@ -103,3 +103,13 @@ class MundoRequest(BaseModel):
 
 class PresencaNPCRequest(BaseModel):
     local_ausente: str = Field(default="", max_length=300)
+
+
+class EditarNarracaoRequest(BaseModel):
+    narracao: str = Field(min_length=1, max_length=30000)
+
+
+class EditarMensagemRequest(BaseModel):
+    conteudo: str = Field(min_length=1, max_length=30000)
+
+

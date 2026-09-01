@@ -1,4 +1,4 @@
-from app.models.estado import Campanha, ConfiguracaoMundo, Estado, EstadoCompleto, Jogador
+from app.models.estado import Campanha, ConfiguracaoMundo, Estado, EstadoCompleto, Jogador, MensagemChat
 
 
 def criar_estado_inicial(campanha_id: str, jogador: Jogador, configuracao_mundo: ConfiguracaoMundo | None = None, mundo_id: str | None = None, mundo_nome: str = "") -> EstadoCompleto:
@@ -11,6 +11,23 @@ def criar_estado_inicial(campanha_id: str, jogador: Jogador, configuracao_mundo:
             jogador.ficha_sistema = construir_ficha(configuracao.d10_pontos_atributos, {})
         else:
             jogador.ficha_sistema = obter_sistema(configuracao.sistema_id).ficha_padrao()
+
+    if not configuracao.cenario or configuracao.cenario == "Um mundo à espera de uma história.":
+        local_inicial = "Cena inicial"
+    elif "Karvane" in configuracao.cenario:
+        local_inicial = "Estábulos nos Portões de Karvane"
+    elif len(configuracao.cenario) <= 60 and "\n" not in configuracao.cenario:
+        local_inicial = configuracao.cenario
+    else:
+        primeira_linha = configuracao.cenario.strip().split("\n")[0]
+        local_inicial = primeira_linha[:60] if len(primeira_linha) > 60 else primeira_linha
+
+    primeira_msg = configuracao.primeira_mensagem.replace("{{user}}", jogador.nome) if configuracao.primeira_mensagem else ""
+    historico = []
+    if primeira_msg:
+        historico.append(MensagemChat(autor="mestre", nome="Mestre", conteudo=primeira_msg))
+
+
     return EstadoCompleto(
         campanha_id=campanha_id,
         mundo_id=mundo_id,
@@ -18,7 +35,9 @@ def criar_estado_inicial(campanha_id: str, jogador: Jogador, configuracao_mundo:
         jogador=jogador,
         configuracao_mundo=configuracao,
         estado=Estado(
-            local=configuracao.cenario or "Cena inicial",
+            local=local_inicial,
         ),
         campanha=Campanha(),
+        ultima_narracao=primeira_msg,
+        historico_chat=historico,
     )

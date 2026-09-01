@@ -10,6 +10,8 @@ Mesma ideia do models.py original, mas com dois campos novos importantes:
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional
 from datetime import datetime
+import uuid
+
 
 
 class Atributos(BaseModel):
@@ -97,6 +99,14 @@ class ConfiguracaoMundo(BaseModel):
     dialogos_exemplo: str = "*O mundo responde às escolhas do personagem.*"
 
 
+class MensagemChat(BaseModel):
+    id: str = Field(default_factory=lambda: uuid.uuid4().hex[:10])
+    autor: str  # "jogador" ou "mestre"
+    nome: str
+    conteudo: str
+    data: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
 class EstadoCompleto(BaseModel):
     campanha_id: str
     mundo_id: Optional[str] = None
@@ -109,5 +119,8 @@ class EstadoCompleto(BaseModel):
     # Última prosa do Narrador. Serve para retomar a cena ao recarregar a
     # página e como contexto imediato no turno seguinte.
     ultima_narracao: str = ""
+    # Histórico persistente e sequencial de todas as mensagens do chat
+    historico_chat: List[MensagemChat] = Field(default_factory=list)
     data_criacao: str = Field(default_factory=lambda: datetime.now().isoformat())
     ultima_atualizacao: str = Field(default_factory=lambda: datetime.now().isoformat())
+

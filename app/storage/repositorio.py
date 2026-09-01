@@ -91,23 +91,58 @@ def listar() -> list[dict]:
     Lista um resumo de todas as campanhas salvas em disco, mais recente
     primeiro. Usada para o jogador poder escolher qual campanha retomar,
     em vez de só a última guardada no localStorage do navegador.
+
+    Otimização: lê apenas os primeiros ~4 KB de cada arquivo para extrair
+    os campos de resumo sem parsear o JSON inteiro (que pode passar de 50 KB
+    em campanhas longas).
     """
+    import re
+
+    _RE_CAMPO = {
+        "campanha_id": re.compile(r'"campanha_id"\s*:\s*"([^"]*)"'),
+        "mundo_id": re.compile(r'"mundo_id"\s*:\s*"([^"]*)"'),
+        "mundo": re.compile(r'"mundo"\s*:\s*"([^"]*)"'),
+        "turno": re.compile(r'"turno"\s*:\s*(\d+)'),
+        "ultima_atualizacao": re.compile(r'"ultima_atualizacao"\s*:\s*"([^"]*)"'),
+    }
+
     resumos = []
     for caminho in DATA_DIR.glob("*.json"):
         try:
             with caminho.open("r", encoding="utf-8") as f:
-                dados = json.load(f)
-            resumos.append({
-                "campanha_id": dados.get("campanha_id", caminho.stem),
-                "mundo_id": dados.get("mundo_id"),
-                "mundo": dados.get("mundo", "Mundo não identificado"),
-                "personagem_id": dados.get("jogador", {}).get("personagem_id"),
-                "nome_jogador": dados.get("jogador", {}).get("nome", "?"),
-                "local": dados.get("estado", {}).get("local", "?"),
-                "turno": dados.get("turno", 0),
-                "ultima_atualizacao": dados.get("ultima_atualizacao", ""),
-            })
-        except (json.JSONDecodeError, OSError):
-            continue  # arquivo corrompido ou ilegível, ignora em vez de quebrar a lista inteira
+                cabecalho = f.read(4096)
+
+            resumo = {
+                "campanha_id": caminho.stem,
+                "mundo_id": None,
+                "mundo": "Mundo não identificado",
+                "personagem_id": None,
+                "nome_jogador": "?",
+                "local": "?",
+                "turno": 0,
+                "ultima_atualizacao": "",
+            }
+
+            for campo, regex in _RE_CAMPO.items():
+                m = regex.search(cabecalho)
+                if m:
+                    resumo[campo] = int(m.group(1)) if campo == "turno" else m.group(1)
+
+            # jogador.nome e jogador.personagem_id estão aninhados; regex simples
+            m_nome = re.search(r'"jogador"\s*:\s*\{[^}]*"nome"\s*:\s*"([^"]*)"', cabecalho, re.DOTALL)
+            if m_nome:
+                resumo["nome_jogador"] = m_nome.group(1)
+            m_pid = re.search(r'"jogador"\s*:\s*\{[^}]*"personagem_id"\s*:\s*"([^"]*)"', cabecalho, re.DOTALL)
+            if m_pid:
+                resumo["personagem_id"] = m_pid.group(1)
+
+            # estado.local também aninhado
+            m_local = re.search(r'"estado"\s*:\s*\{[^}]*"local"\s*:\s*"([^"]*)"', cabecalho, re.DOTALL)
+            if m_local:
+                resumo["local"] = m_local.group(1)
+
+            resumos.append(resumo)
+        except OSError:
+            continue
     resumos.sort(key=lambda r: r["ultima_atualizacao"], reverse=True)
     return resumos

@@ -25,8 +25,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
-from app.config import TURNOS_POR_COMPILACAO
-from app.models.estado import EstadoCompleto
+from app.config import LIMITE_HISTORICO_CHAT, TURNOS_POR_COMPILACAO
+from app.models.estado import EstadoCompleto, MensagemChat
 from app.services import compilador, gerente, interprete, narrador
 from app.services.ia_client import ErroIA
 from app.systems.base import ResultadoTesteGenerico
@@ -39,6 +39,9 @@ class ResultadoTurno:
     estado: EstadoCompleto
     erro: Optional[str]
     teste: Optional[ResultadoTesteGenerico]
+    # As mensagens adicionadas neste turno (jogador + mestre), para que o
+    # front-end possa appendá-las sem re-parsear o histórico inteiro.
+    mensagens_novas: list[MensagemChat] = None
 
 
 def processar_turno(estado: EstadoCompleto, mensagem: str) -> ResultadoTurno:
@@ -68,8 +71,27 @@ def processar_turno(estado: EstadoCompleto, mensagem: str) -> ResultadoTurno:
     estado.turno += 1
     estado.ultima_atualizacao = datetime.now().isoformat()
 
+    # Histórico persistente de mensagens da conversa
+    nome_jogador = estado.jogador.nome if estado.jogador and estado.jogador.nome else "Jogador"
+    nome_mestre = "Mestre"
+    
+    if not estado.historico_chat and estado.configuracao_mundo and estado.configuracao_mundo.primeira_mensagem:
+        primeira = estado.configuracao_mundo.primeira_mensagem.replace("{{user}}", nome_jogador)
+        estado.historico_chat.append(MensagemChat(autor="mestre", nome=nome_mestre, conteudo=primeira))
+
+    estado.historico_chat.append(MensagemChat(autor="jogador", nome=nome_jogador, conteudo=mensagem))
+    msg_mestre = MensagemChat(autor="mestre", nome=nome_mestre, conteudo=resposta)
+    estado.historico_chat.append(msg_mestre)
+    novas = [estado.historico_chat[-2], msg_mestre]
+
+    # Poda mensagens antigas para manter o JSON leve. A primeira mensagem
+    # (abertura do mundo) é sempre preservada.
+    if len(estado.historico_chat) > LIMITE_HISTORICO_CHAT:
+        primeira = estado.historico_chat[0]
+        estado.historico_chat = [primeira] + estado.historico_chat[-(LIMITE_HISTORICO_CHAT - 1):]
+
     # Passo 0 (a cada N turnos): Compilador
     if estado.turno % TURNOS_POR_COMPILACAO == 0:
         estado = compilador.compilar(estado)
 
-    return ResultadoTurno(resposta=resposta, estado=estado, erro=erro, teste=resultado_teste)
+    return ResultadoTurno(resposta=resposta, estado=estado, erro=erro, teste=resultado_teste, mensagens_novas=novas)

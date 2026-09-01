@@ -1,9 +1,10 @@
-# Mestre 0.8.0 - motor de RPG com IA
+# Mestre 0.9.0 - motor de RPG com IA
 
 ## Versão atual
 
-**0.8.0** — Adiciona mundos canônicos como moldes: cada campanha recebe uma
-cópia independente das fichas e da configuração do mundo escolhido.
+**0.9.0** — Histórico de chat persistente, edição e deleção em cascata de
+mensagens, regeneração de resposta, sincronização canônica da Wiki, e correções
+de arquitetura (double-save, payload inflado, listagem otimizada).
 
 O projeto usa versionamento semântico: `MAIOR.MENOR.CORREÇÃO`. Recursos novos
 compatíveis elevam a versão menor; correções elevam a versão de correção;
@@ -45,13 +46,13 @@ O que já funciona de ponta a ponta:
 - home em galeria de mundos e campanhas, com links diretos para jogar, editar ou abrir
   o mundo/campanha na Wiki
 - turno: Intérprete → dados (se preciso) → Gerente (patch de estado) → Narrador
-- compilação de memórias a cada N turnos
+- compilação de memórias a cada N turnos, com sincronização canônica da Wiki
 - o servidor é a fonte de verdade (o cliente não reenvia PV/inventário)
 - Wiki por mundo e por campanha com sidebar colapsável por categoria, contadores
   dinâmicos `(N)`, listagem rápida e painel de perfil/detalhe rico com imagem,
   texto formatado, campos estruturados, tags e relações entre fichas
-- o mesmo patch do Gerente pode atualizar fichas e relações da Wiki sem criar
-  uma chamada adicional à IA por turno
+- o mesmo patch do Gerente pode atualizar fichas, relações da Wiki e o estado
+  do jogador (poderes adquiridos, itens, rank) sem chamada adicional à IA
 - NPCs presentes e ausentes: quem deixa a cena permanece salvo, com sua
   localização e memória da relação, mas só os presentes são enviados à IA
 - fichas extensas de jogador em Markdown são preservadas e organizadas por
@@ -62,6 +63,31 @@ O que já funciona de ponta a ponta:
   processamento e no contexto enviado ao Narrador
 - sistemas de regras plugáveis, com contrato genérico de resultado; hoje há os
   plugins `d20` (padrão), `d10` (pool oposto) e `nenhum` (narrativa pura)
+- **histórico de chat completo** persistido em `historico_chat` no JSON da
+  campanha, com edição de qualquer mensagem (jogador ou Mestre), deleção em
+  cascata (apaga a mensagem e todas as subsequentes), regeneração da última
+  resposta do Mestre, e indicador visual de digitação animado
+- **sincronização canônica manual** via botão "⚡ Sincronizar Wiki" ou
+  endpoint `POST /campanhas/{id}/sincronizar_wiki`: analisa os acontecimentos
+  recentes e atualiza fichas da Wiki, jogador e memórias de longo prazo
+
+## Histórico de chat e edição de mensagens
+
+Toda mensagem trocada entre jogador e Mestre é salva sequencialmente em
+`estado.historico_chat`. As operações disponíveis:
+
+- `PUT /campanhas/{id}/mensagens/{msg_id}` — edita o conteúdo de qualquer
+  mensagem (jogador ou Mestre). Se for a última do Mestre, sincroniza com
+  `ultima_narracao`.
+- `DELETE /campanhas/{id}/mensagens/{msg_id}` — apaga a mensagem e **todas as
+  mensagens posteriores** (cascata). Recalcula `turno` e `ultima_narracao`.
+- `POST /campanhas/{id}/regenerar` — remove a última resposta do Mestre e
+  reprocessa o turno com a última ação do jogador.
+
+O histórico é podado automaticamente quando excede `LIMITE_HISTORICO_CHAT`
+(padrão: 200 mensagens). A primeira mensagem (abertura do mundo) é sempre
+preservada; mensagens antigas já foram condensadas pelo compilador em
+`memorias_importantes`.
 
 ## Mundos, campanhas, Wiki e presença
 
@@ -139,20 +165,30 @@ por exemplo `{"contem_itens": ["item_espada"]}`. O Gerente inclui um
 `patch_wiki` opcional na sua mesma resposta JSON para atualizar fatos e relações
 persistentes; uma relação removida nunca apaga a ficha de destino.
 
+O Gerente agora também recebe a lista de IDs e títulos das fichas da Wiki no
+prompt, permitindo que ele referencie as fichas corretas ao aplicar mudanças
+drásticas (mortes, destruição de locais, absorção de poderes).
+
+O compilador (`compilar_e_sincronizar_wiki`) vai além do patch por turno:
+analisa o histórico recente completo e pode criar fichas novas, atualizar
+campos e conteúdo de fichas existentes, e registrar evolução do jogador
+(novos poderes, mudança de rank, itens). É acionado automaticamente a cada
+N turnos e manualmente pelo botão "⚡ Sincronizar Wiki".
+
 ## Estrutura
 
 ```
 app/
-  config.py              .env, modelo Gemini, limites de memória
+  config.py              .env, modelo Gemini, limites de memória e chat
   main.py                FastAPI, páginas estáticas e /saude
   models/                estado, mundo, personagem, ficha da Wiki e payloads
   prompts/               system prompt + preencher() seguro
   services/
     ia_client.py         única camada Gemini
     interprete.py        Passo 1
-    gerente.py           Passo 2 (aplica patch)
+    gerente.py           Passo 2 (aplica patch de NPCs, Wiki e jogador)
     narrador.py          Passo 3
-    compilador.py        Passo 0 a cada N turnos
+    compilador.py        Passo 0 a cada N turnos + sincronização canônica
     dados.py             1d20 + atributo
     pipeline.py          orquestra o turno
     estado_inicial.py    estado inicial derivado da configuração do mundo
@@ -163,7 +199,7 @@ app/
   routers/               campanhas, mundos, personagens e Wiki HTTP
   static/
     home.html            galeria de campanhas (/)
-    index.html           tela do jogo (/jogo)
+    index.html           tela do jogo (/jogo) — chat moderno com edição/cascata
     personagens.html     catálogo de personagens reutilizáveis
     mundos.html          CRUD dos moldes de mundo
     wiki.html            painel da Wiki por campanha
@@ -176,10 +212,37 @@ tests/                   dados, patch, persistência, prompts (sem Gemini)
 
 **Estes problemas não afetam MVP, mas aparecerão com crescimento:**
 
-- **Pipeline**: `app/services/pipeline.py` orquestra hoje 5 passos. Com >7-8 passos novos, vai precisar refatoração (factory pattern ou state machine).
-- **Armazenamento**: JSON em disco funciona até ~100 campanhas. Depois: Postgres + Redis cache.
-- **Estado**: Hoje Estado tem ~5 listas. Evitar adicionar mais sem revisar modelo de persistência.
-- **Validação em Pydantic**: Está correto. Manter assim (reduz "lixo" nos services).
+- **Pipeline**: `app/services/pipeline.py` orquestra hoje 5-6 passos (Intérprete,
+  Dados, Gerente, Narrador, Histórico, Compilador periódico). Com >7-8 passos
+  novos, vai precisar refatoração (factory pattern ou state machine).
+- **Armazenamento**: JSON em disco funciona até ~100 campanhas. Depois:
+  Postgres + Redis cache. A listagem já foi otimizada para leitura parcial
+  (4 KB por arquivo em vez de parse completo), mitigando o gargalo imediato.
+- **Estado**: `historico_chat` cresce a cada turno, mas é podado
+  automaticamente em `LIMITE_HISTORICO_CHAT` (padrão: 200 mensagens).
+  Mensagens antigas já foram condensadas em `memorias_importantes` pelo
+  compilador antes de serem perdidas. `jogador.historico` e
+  `jogador.ficha_completa` crescem por concatenação de strings em
+  `jogador_atualizado` — migrar para `List[str]` quando a ficha for
+  reestruturada.
+- **Validação em Pydantic**: Está correto. Manter assim (reduz "lixo" nos
+  services).
+
+## Correções na 0.9.0
+
+- **Double-save removido**: `compilador.compilar_e_sincronizar_wiki()` não
+  salva mais internamente — quem persiste é sempre o router/caller. Antes,
+  turnos com compilação gravavam o estado duas vezes no disco.
+- **Lógica hardcoded removida**: `compilador.py` e `narrador.py` não
+  referenciam mais personagens específicos (ex: "Olive") por nome. Toda
+  mudança de presença de NPCs é tratada pelo gerente via `npcs_saem_de_cena`.
+- **Narrador respeita mortes**: o prompt do Narrador agora tem instrução
+  explícita para nunca dar voz a NPCs mortos ou devorados conforme as
+  memórias canônicas.
+- **Backfill corrigido**: campanhas antigas sem `historico_chat` são
+  preenchidas com `nome_mestre = "Mestre"` em vez de "Olive".
+- **Listagem otimizada**: `repositorio.listar()` lê apenas 4 KB por arquivo
+  (regex sobre cabeçalho) em vez de parsear o JSON inteiro.
 
 ## O que ainda não está resolvido
 
@@ -188,4 +251,4 @@ tests/                   dados, patch, persistência, prompts (sem Gemini)
 - **Banco de dados.** JSON em disco não escala nem lista campanhas por usuário.
 - **Rate limiting** das 50 mensagens/dia do Modo Janitor.
 - **Modo Janitor.** Não implementado.
-- **Histórico de chat completo.** Só a última narração e um FIFO de memórias recentes.
+

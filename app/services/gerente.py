@@ -23,6 +23,7 @@ from app.prompts.preencher import preencher
 from app.services.formatadores import formatar_npcs_resumo, formatar_teste_gerente
 from app.services.ia_client import gerar_json, ErroIA, ErroFormatoIA
 from app.services.wiki_gerente import aplicar_patch_wiki
+from app.storage import ficha_repositorio
 
 PROMPT = """Você é o Gerente de estado de um RPG. Sua função é decidir como o mundo reage à ação do jogador, NÃO narrar em prosa.
 
@@ -40,6 +41,12 @@ Responda APENAS com um JSON válido, sem texto antes ou depois, sem cercas de c�
   "progresso_delta": número inteiro entre -5 e 10 representando avanço no arco principal, 0 se nada mudou,
   "local_novo": "novo local ou null se não mudou",
   "hora_nova": "novo horário ou null se não mudou",
+  "jogador_atualizado": {
+    "novos_poderes": "descrição de novo poder adquirido ou null",
+    "novo_status_rank": "novo status/rank se mudou ou null",
+    "novos_itens": ["item"],
+    "itens_removidos": []
+  } ou null,
   "patch_wiki": {
     "fichas_atualizadas": [{"id": "id da ficha", "campos": {"chave": "valor"}, "conteudo_append": "texto ou null"}],
     "ficha_nova": {"tipo": "tipo válido", "titulo": "..."} ou null,
@@ -48,9 +55,12 @@ Responda APENAS com um JSON válido, sem texto antes ou depois, sem cercas de c�
   } ou {} se nenhum fato canônico da Wiki mudou
 }
 
-Só inclua mudanças que façam sentido causadas pela ação do jogador. Não invente eventos grandes sem motivo.
-Quando uma ficha mudar, use patch_wiki. Relações sempre usam IDs; remover uma
-relação NÃO apaga a ficha de destino. Não crie patch_wiki para diálogo comum.
+ATENÇÃO:
+- Se uma entidade sofreu morte, destruição ou mudança drástica (ex: Olive morreu/foi devorada, sentinela destruído, andar da torre conquistado), use patch_wiki.fichas_atualizadas com o ID exato dela listado abaixo para atualizar campos e registrar no conteudo_append!
+- Se o jogador despertou ou absorveu novos poderes, preencha "jogador_atualizado".
+
+[FICHAS DA WIKI DISPONÍVEIS]
+{fichas_wiki}
 
 [ESTADO ATUAL]
 Local: {local} - {hora}
@@ -75,8 +85,12 @@ def atualizar_estado(
     interpretacao: dict,
     resultado_teste: Optional[ResultadoTesteGenerico] = None,
 ) -> EstadoCompleto:
+    fichas = ficha_repositorio.listar(f"campanha_{estado.campanha_id}")
+    fichas_resumo = "\n".join(f"- ID: {f.id} | {f.titulo} ({f.tipo}) - {f.resumo}" for f in fichas) or "nenhuma ficha na wiki"
+
     prompt = preencher(
         PROMPT,
+        fichas_wiki=fichas_resumo,
         local=estado.estado.local,
         hora=estado.estado.hora,
         npcs=formatar_npcs_resumo(estado),
@@ -183,6 +197,28 @@ def aplicar_patch(estado: EstadoCompleto, patch: dict) -> None:
     # A Wiki compartilha o JSON do Gerente, mas mantém modelo e persistência
     # próprios. Um patch malformado é ignorado sem comprometer o turno.
     aplicar_patch_wiki(estado, patch.get("patch_wiki"))
+
+    # Atualizações no próprio jogador (evolução, novos poderes, status)
+    # TODO: historico e ficha_completa crescem por concatenação de strings.
+    # Migrar para List[str] quando a ficha do jogador for reestruturada.
+    jog_up = patch.get("jogador_atualizado")
+    if isinstance(jog_up, dict):
+        if jog_up.get("novos_poderes"):
+            poderes = str(jog_up["novos_poderes"])
+            if poderes not in estado.jogador.historico:
+                estado.jogador.historico += f"\n[Poderes Adquiridos]: {poderes}"
+                estado.jogador.ficha_completa += f"\n\n### PODERES ADQUIRIDOS / ABSORVIDOS\n- {poderes}"
+        if jog_up.get("novo_status_rank"):
+            status = str(jog_up["novo_status_rank"])
+            if status not in estado.jogador.aparencia:
+                estado.jogador.aparencia += f" | {status}"
+        for item in jog_up.get("novos_itens") or []:
+            if str(item) not in estado.jogador.inventario:
+                estado.jogador.inventario.append(str(item))
+        for item in jog_up.get("itens_removidos") or []:
+            if str(item) in estado.jogador.inventario:
+                estado.jogador.inventario.remove(str(item))
+
 
 
 def _registrar_memoria_recente(estado: EstadoCompleto, texto: str) -> None:

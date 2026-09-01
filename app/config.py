@@ -39,6 +39,12 @@ LIMITE_MEMORIAS_RECENTES = int(os.getenv("LIMITE_MEMORIAS_RECENTES", "16"))
 # Máximo de memórias importantes (destiladas) mantidas pelo Compilador.
 LIMITE_MEMORIAS_IMPORTANTES = int(os.getenv("LIMITE_MEMORIAS_IMPORTANTES", "5"))
 
+# Quantidade máxima de mensagens no historico_chat de uma campanha.
+# Mensagens antigas são podadas (as mais antigas removidas) para manter
+# o JSON de campanha leve. O compilador já condensou essas mensagens em
+# memorias_importantes antes de serem perdidas.
+LIMITE_HISTORICO_CHAT = int(os.getenv("LIMITE_HISTORICO_CHAT", "200"))
+
 if not GEMINI_API_KEY:
     logger.warning(
         "GEMINI_API_KEY não encontrada no .env. A IA vai recusar chamadas até isso ser configurado."
