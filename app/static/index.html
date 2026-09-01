@@ -376,6 +376,9 @@
             border: 1px solid #244b77;
             box-shadow: 0 6px 18px rgba(0,0,0,0.5);
             object-fit: cover;
+            display: inline-block;
+            vertical-align: middle;
+            margin: 6px 0;
         }
 
         /* Rodapé da Mensagem (Regenerar e Opções) */
@@ -890,7 +893,87 @@
         let campanhaId = iniciarNova ? null : (parametrosUrl.get('campanha_id') || localStorage.getItem(CHAVE_STORAGE));
         let estadoAtual = null;
         let estaGerando = false;
+        let catalogoFichas = new Map();
 
+        const TIPOS_FICHA = new Set([
+            'personagem', 'local', 'item', 'organizacao', 'evento',
+            'raca', 'criatura', 'divindade', 'conceito'
+        ]);
+
+        async function carregarCatalogoCampanha(cid) {
+            if (!cid) return;
+            try {
+                const resp = await fetch(`/campanhas/${encodeURIComponent(cid)}/catalogo`);
+                if (resp.ok) {
+                    const fichas = await resp.json();
+                    catalogoFichas = new Map(fichas.map(f => [f.id, f]));
+                }
+            } catch (err) {
+                console.warn('Não foi possível carregar o catálogo de fichas da campanha:', err);
+            }
+        }
+
+        function resolverPlaceholders(texto, mapaFichas, nomeJogador) {
+            if (!texto) return '';
+            try {
+                let res = String(texto);
+                const nome = (nomeJogador && String(nomeJogador).trim()) ? String(nomeJogador).trim() : 'Jogador';
+
+                // 1. Resolver {{user}} mantendo comportamento atual
+                res = res.replace(/\{\{\s*user\s*\}\}/gi, nome);
+
+                const mapa = (mapaFichas instanceof Map)
+                    ? mapaFichas
+                    : (Array.isArray(mapaFichas) ? new Map(mapaFichas.map(f => [f.id, f])) : new Map());
+
+                // 2. Resolver {{tipo:id:photo}} e {{tipo:id}}
+                const regexPlaceholder = /\{\{\s*([a-zA-Z0-9_]+)\s*:\s*([^}:]+?)\s*(?::\s*([a-zA-Z0-9_]+)\s*)?\}\}/g;
+
+                res = res.replace(regexPlaceholder, (match, tipo, id, modificador) => {
+                    const tipoNorm = String(tipo).toLowerCase().trim();
+                    const modNorm = modificador ? String(modificador).toLowerCase().trim() : '';
+                    const idTrim = String(id).trim();
+
+                    if (!TIPOS_FICHA.has(tipoNorm) && !mapa.has(idTrim)) {
+                        return match;
+                    }
+
+                    let ficha = mapa.get(idTrim);
+                    if (!ficha) {
+                        for (const [k, v] of mapa.entries()) {
+                            if (k.toLowerCase() === idTrim.toLowerCase()) {
+                                ficha = v;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Parte 2 — Placeholder de foto: {{tipo:id:photo}}
+                    if (modNorm === 'photo') {
+                        if (ficha && ficha.imagem && typeof ficha.imagem === 'string' && ficha.imagem.trim().length > 0) {
+                            const src = escapeHtml(ficha.imagem.trim());
+                            const alt = escapeHtml(ficha.titulo || idTrim || 'Foto');
+                            return `<img class="chat-img" src="${src}" alt="${alt}" onerror="this.style.display='none'">`;
+                        }
+                        // Se a ficha não existe OU imagem está vazia, remover silenciosamente
+                        return '';
+                    }
+
+                    // Parte 1 — Placeholder de título: {{tipo:id}}
+                    if (ficha && ficha.titulo) {
+                        return ficha.titulo;
+                    }
+
+                    // Degradação com segurança se o id não existir no catálogo
+                    return idTrim || '[desconhecido]';
+                });
+
+                return res;
+            } catch (err) {
+                console.warn('Erro ao resolver placeholders:', err);
+                return String(texto);
+            }
+        }
 
         window.addEventListener('DOMContentLoaded', async () => {
             await carregarPersonagens();
@@ -911,6 +994,7 @@
                 }
                 const estado = await resp.json();
                 estadoAtual = estado;
+                await carregarCatalogoCampanha(campanhaId);
                 mostrarAreaDeChat(estado);
             } catch (e) {
                 console.warn('Não foi possível retomar a campanha automaticamente:', e);
@@ -1004,6 +1088,8 @@
                 </div>
             ` : '';
 
+            const conteudoFormatado = formatarNarracao(resolverPlaceholders(msg.conteudo, catalogoFichas, estadoAtual?.jogador?.nome));
+
             card.innerHTML = `
                 <div class="msg-avatar-wrap">
                     <div class="msg-avatar">${avatarHtml}</div>
@@ -1020,7 +1106,7 @@
                         </div>
                     </div>
                     <div class="msg-body" id="msg-body-${msg.id}">
-                        ${formatarNarracao(msg.conteudo)}
+                        ${conteudoFormatado}
                     </div>
                     ${footerHtml}
                 </div>
@@ -1068,7 +1154,7 @@
 
             if (historico.length === 0) {
                 const primeiraMsg = estado.configuracao_mundo?.primeira_mensagem
-                    ? estado.configuracao_mundo.primeira_mensagem.replace(/\{\{user\}\}/g, estado.jogador?.nome || 'Jogador')
+                    ? resolverPlaceholders(estado.configuracao_mundo.primeira_mensagem, catalogoFichas, estado.jogador?.nome)
                     : (estado.ultima_narracao || 'A aventura começa.');
                 const msgInicial = {
                     id: 'msg_ini',
@@ -1159,7 +1245,7 @@
             if (!card) return;
             const raw = card.getAttribute('data-raw') || '';
             const body = document.getElementById(`msg-body-${msgId}`);
-            body.innerHTML = formatarNarracao(raw);
+            body.innerHTML = formatarNarracao(resolverPlaceholders(raw, catalogoFichas, estadoAtual?.jogador?.nome));
         }
 
         async function salvarEdicao(msgId) {
@@ -1174,7 +1260,7 @@
             const card = document.getElementById(`msg-card-${msgId}`);
             card.setAttribute('data-raw', novoTexto);
             const body = document.getElementById(`msg-body-${msgId}`);
-            body.innerHTML = formatarNarracao(novoTexto);
+            body.innerHTML = formatarNarracao(resolverPlaceholders(novoTexto, catalogoFichas, estadoAtual?.jogador?.nome));
 
             if (campanhaId) {
                 try {
@@ -1330,9 +1416,14 @@
 
         function formatarNarracao(textoBruto) {
             if (!textoBruto) return '';
-            
-            const blocos = String(textoBruto).split(/\n{2,}/);
-            
+
+            let textoProcessado = String(textoBruto);
+            if (textoProcessado.includes('{{')) {
+                textoProcessado = resolverPlaceholders(textoProcessado, catalogoFichas, estadoAtual?.jogador?.nome);
+            }
+
+            const blocos = textoProcessado.split(/\n{2,}/);
+
             return blocos.map(bloco => {
                 let texto = bloco.trim();
                 if (!texto) return '';
@@ -1342,6 +1433,18 @@
                     const alt = escapeHtml(matchImagem[1]);
                     const src = encodeURI(matchImagem[2]);
                     return `<div class="chat-img-wrap"><img src="${src}" alt="${alt}" class="chat-img" onerror="this.parentElement.style.display='none'"></div>`;
+                }
+
+                // Protege tags <img> geradas por resolverPlaceholders (:photo) para não serem escapadas por escapeHtml
+                const tagsImg = [];
+                texto = texto.replace(/<img\b[^>]*>/gi, (imgTag) => {
+                    tagsImg.push(imgTag);
+                    return `__SAFE_IMG_TOKEN_${tagsImg.length - 1}__`;
+                });
+
+                // Se o bloco inteiro contiver exclusivamente uma imagem
+                if (tagsImg.length === 1 && texto.trim() === '__SAFE_IMG_TOKEN_0__') {
+                    return `<div class="chat-img-wrap">${tagsImg[0]}</div>`;
                 }
 
                 let seguro = escapeHtml(texto);
@@ -1364,6 +1467,11 @@
 
                 // Quebras de linha simples dentro do parágrafo
                 seguro = seguro.replace(/\n/g, '<br>');
+
+                // Restaura as tags <img> protegidas
+                tagsImg.forEach((imgTag, i) => {
+                    seguro = seguro.replace(`__SAFE_IMG_TOKEN_${i}__`, imgTag);
+                });
 
                 return `<p class="narrativa-paragrafo">${seguro}</p>`;
             }).join('');
@@ -1412,6 +1520,7 @@
             const estado = await resp.json();
             campanhaId = estado.campanha_id;
             localStorage.setItem(CHAVE_STORAGE, campanhaId);
+            await carregarCatalogoCampanha(campanhaId);
             mostrarAreaDeChat(estado);
         }
 
@@ -1440,6 +1549,7 @@
             const estado = await resp.json();
             campanhaId = estado.campanha_id;
             localStorage.setItem(CHAVE_STORAGE, campanhaId);
+            await carregarCatalogoCampanha(campanhaId);
 
             mostrarAreaDeChat(estado);
         }
@@ -1464,6 +1574,7 @@
                 }
 
                 estadoAtual = dados.estado;
+                await carregarCatalogoCampanha(campanhaId);
                 mostrarAreaDeChat(dados.estado);
 
                 let msgSucesso = `✨ Sincronização Canônica Concluída!
