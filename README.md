@@ -275,6 +275,6 @@ tests/                   dados, patch, persistência, prompts (sem Gemini)
 - **Autenticação.** Quem tem um ID acessa campanhas, mundos, personagens e
   fichas correspondentes.
 - **Banco de dados.** JSON em disco não escala nem lista campanhas por usuário.
-- **Rate limiting** das 50 mensagens/dia do Modo Janitor.
-- **Modo Janitor.** Não implementado.
+- **Rate limiting** das 50 mensagens/dia do Modo Free.
+- **Modo Free.** Não implementado.
 
