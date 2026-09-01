@@ -20,6 +20,9 @@ class Atributos(BaseModel):
 
 
 class Jogador(BaseModel):
+    # Referência opcional ao perfil reutilizável de origem. A campanha mantém
+    # uma cópia para que PV, inventário e evolução não vazem para outra mesa.
+    personagem_id: Optional[str] = None
     nome: str
     idade: int
     genero: str

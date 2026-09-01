@@ -24,7 +24,7 @@ from app.services import pipeline
 from app.services.estado_inicial import criar_estado_inicial
 from app.services.fichas_jogador import organizar_ficha_markdown
 from app.services.ia_client import ErroIA
-from app.storage import repositorio
+from app.storage import personagem_repositorio, repositorio
 from app.systems.sistema_d10 import construir_ficha
 
 router = APIRouter(prefix="/campanhas", tags=["campanhas"])
@@ -38,16 +38,22 @@ async def listar_campanhas():
 @router.post("", response_model=EstadoCompleto)
 async def criar_campanha(dados: CriarPersonagemRequest):
     campanha_id = repositorio.novo_id()
+    personagem = None
+    if dados.personagem_id:
+        personagem = personagem_repositorio.carregar(dados.personagem_id)
+        if not personagem:
+            raise HTTPException(status_code=404, detail="Personagem não encontrado")
     estado = criar_estado_inicial(
         campanha_id,
         Jogador(
-            nome=dados.nome.strip(),
-            idade=dados.idade,
-            genero=dados.genero.strip(),
-            aparencia=dados.aparencia.strip(),
-            historico=dados.historico.strip(),
-            ficha_completa=dados.ficha_completa.strip(),
-            ficha_estruturada=organizar_ficha_markdown(dados.ficha_completa),
+            personagem_id=personagem.id if personagem else None,
+            nome=(personagem.nome if personagem else dados.nome).strip(),
+            idade=personagem.idade if personagem else dados.idade,
+            genero=(personagem.genero if personagem else dados.genero).strip(),
+            aparencia=(personagem.aparencia if personagem else dados.aparencia).strip(),
+            historico=(personagem.historico if personagem else dados.historico).strip(),
+            ficha_completa=(personagem.ficha_completa if personagem else dados.ficha_completa).strip(),
+            ficha_estruturada=organizar_ficha_markdown(personagem.ficha_completa if personagem else dados.ficha_completa),
             ficha_sistema=(
                 construir_ficha(dados.d10_pontos_atributos, dados.d10_atributos_jogador)
                 if dados.sistema_rpg and dados.sistema_id.strip() == "d10" else {}
@@ -65,15 +71,6 @@ async def criar_campanha(dados: CriarPersonagemRequest):
         ),
     )
     repositorio.salvar(estado)
-    # A Wiki é persistida fora do estado dinâmico da campanha.
-    from app.models.ficha import FichaMundo
-    from app.storage import ficha_repositorio
-    ficha_repositorio.salvar(campanha_id, FichaMundo(
-        id="ficha_estalajadeira", tipo="personagem", titulo="A Estalajadeira do Cão Caído",
-        resumo="Dona da taverna inicial; conhece os rumores de Alderan.",
-        conteudo="Uma humana prática e observadora. Sua confiança precisa ser conquistada.",
-        tags=["alderan", "taverna", "npc"],
-    ))
     return estado
 
 

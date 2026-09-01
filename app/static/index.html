@@ -55,15 +55,12 @@
     <p><i>Motor de RPG com IA - Interface de Teste</i></p>
 
     <div id="personagem-area">
-        <h3>Criar Personagem</h3>
+        <h3>Criar nova campanha</h3>
         <div class="login-form">
-            <input type="text" id="nome" placeholder="Nome">
-            <input type="number" id="idade" placeholder="Idade">
-            <input type="text" id="genero" placeholder="Gênero">
-            <input type="text" id="aparencia" placeholder="Aparência">
-            <textarea id="historico" placeholder="Histórico do personagem (resumo curto, opcional se preencher a ficha completa abaixo)"></textarea>
-            <label for="ficha_completa">Ficha completa do personagem (opcional — cole aqui a ficha inteira, com habilidades, regras próprias, lore etc. Isso vai junto em toda narração, o personagem não é esquecido depois da criação.)</label>
-            <textarea id="ficha_completa" placeholder="Cole aqui a ficha completa do personagem, se tiver uma..."></textarea>
+            <label for="personagem_id">Personagem</label>
+            <select id="personagem_id" style="width:100%; padding:10px; background:#0f3460; color:white; border:1px solid #345; border-radius:5px;"></select>
+            <p style="font-size:13px;color:#b8b8d1;">Personagens são reutilizáveis. O progresso da campanha continua independente.</p>
+            <a href="/personagens" class="link-toggle" style="margin-top:0;">Criar ou editar personagens</a>
             <details class="mundo-config">
                 <summary>Configurar mundo (opcional)</summary>
                 <label for="cenario">Cenário</label>
@@ -84,7 +81,7 @@
                 <label>d10: distribuir atributos do personagem</label>
                 <div class="form-row"><select id="d10_atributo_fisico"></select><select id="d10_atributo_social"></select><select id="d10_atributo_mental"></select></div>
             </details>
-            <button onclick="criarPersonagem()" style="width:100%;">Iniciar Aventura</button>
+            <button onclick="criarPersonagem()" style="width:100%;">Iniciar campanha</button>
         </div>
         <span class="link-toggle" onclick="alternarListaCampanhas()">Ver campanhas salvas</span>
         <div class="lista-campanhas" id="lista-campanhas" style="display:none;"></div>
@@ -119,7 +116,9 @@
         // O servidor continua sendo a fonte de verdade do estado — aqui só
         // guardamos QUAL campanha retomar.
         const CHAVE_STORAGE = 'mestre_campanha_id';
-        let campanhaId = localStorage.getItem(CHAVE_STORAGE);
+        const parametrosUrl = new URLSearchParams(window.location.search);
+        const iniciarNova = parametrosUrl.get('nova') === '1';
+        let campanhaId = iniciarNova ? null : (parametrosUrl.get('campanha_id') || localStorage.getItem(CHAVE_STORAGE));
 
         function pontosD10() {
             return ['fisico', 'social', 'mental'].map(categoria =>
@@ -139,6 +138,7 @@
 
         // Ao carregar a página, tenta retomar a campanha salva.
         window.addEventListener('DOMContentLoaded', async () => {
+            await carregarPersonagens();
             if (!campanhaId) return;
 
             try {
@@ -161,6 +161,29 @@
                 console.warn('Não foi possível retomar a campanha automaticamente:', e);
             }
         });
+
+        async function carregarPersonagens() {
+            const seletor = document.getElementById('personagem_id');
+            try {
+                const resposta = await fetch('/api/personagens');
+                if (!resposta.ok) throw new Error();
+                const personagens = await resposta.json();
+                seletor.innerHTML = '<option value="">Escolha um personagem…</option>';
+                personagens.forEach(personagem => {
+                    const opcao = document.createElement('option');
+                    opcao.value = personagem.id;
+                    opcao.textContent = `${personagem.nome} — ${personagem.aparencia}`;
+                    seletor.appendChild(opcao);
+                });
+                const personagemDaUrl = parametrosUrl.get('personagem_id');
+                if (personagemDaUrl && personagens.some(personagem => personagem.id === personagemDaUrl)) {
+                    seletor.value = personagemDaUrl;
+                }
+                if (!personagens.length) seletor.innerHTML = '<option value="">Nenhum personagem cadastrado</option>';
+            } catch (_) {
+                seletor.innerHTML = '<option value="">Não foi possível carregar personagens</option>';
+            }
+        }
 
         function mostrarAreaDeChat(estado, mensagemBemVindo) {
             document.getElementById('personagem-area').style.display = 'none';
@@ -218,12 +241,6 @@
             document.getElementById('chat-area').style.display = 'none';
             document.getElementById('personagem-area').style.display = 'block';
             document.getElementById('chat').innerHTML = '';
-            document.getElementById('nome').value = '';
-            document.getElementById('idade').value = '';
-            document.getElementById('genero').value = '';
-            document.getElementById('aparencia').value = '';
-            document.getElementById('historico').value = '';
-            document.getElementById('ficha_completa').value = '';
             ['cenario', 'personalidade_mestre', 'primeira_mensagem', 'dialogos_exemplo'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('sistema_rpg').checked = true;
             document.getElementById('sistema_id').value = 'd20';
@@ -232,6 +249,7 @@
             document.getElementById('d10_pontos_social').value = '3';
             document.getElementById('d10_pontos_mental').value = '2';
             atualizarOpcoesD10();
+            history.replaceState({}, '', '/jogo?nova=1');
         }
 
         function escapeHtml(str) {
@@ -290,13 +308,10 @@
         }
 
         async function criarPersonagem() {
+            const personagemId = document.getElementById('personagem_id').value;
+            if (!personagemId) { alert('Escolha ou crie um personagem antes de iniciar a campanha.'); return; }
             const dados = {
-                nome: document.getElementById('nome').value || 'Aventureiro',
-                idade: parseInt(document.getElementById('idade').value) || 20,
-                genero: document.getElementById('genero').value || 'Indefinido',
-                aparencia: document.getElementById('aparencia').value || 'Viajante comum',
-                historico: document.getElementById('historico').value || 'Um viajante em busca de aventuras',
-                ficha_completa: document.getElementById('ficha_completa').value || '',
+                personagem_id: personagemId,
                 cenario: document.getElementById('cenario').value || '',
                 personalidade_mestre: document.getElementById('personalidade_mestre').value || '',
                 primeira_mensagem: document.getElementById('primeira_mensagem').value || '',
@@ -329,12 +344,6 @@
             localStorage.setItem(CHAVE_STORAGE, campanhaId);
 
             mostrarAreaDeChat(estado, true);
-        }
-
-        const campanhaDaUrl = new URLSearchParams(window.location.search).get('campanha_id');
-        if (campanhaDaUrl) {
-            campanhaId = campanhaDaUrl;
-            localStorage.setItem(CHAVE_STORAGE, campanhaId);
         }
 
         atualizarOpcoesD10();

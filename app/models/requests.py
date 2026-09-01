@@ -16,7 +16,7 @@ from app.models.ficha import TipoFicha
 from app.systems.base import ResultadoTesteGenerico
 
 
-class CriarPersonagemRequest(BaseModel):
+class PersonagemRequest(BaseModel):
     nome: str = Field(min_length=1, max_length=80)
     idade: int = Field(ge=1, le=200)
     genero: str = Field(min_length=1, max_length=40)
@@ -28,6 +28,16 @@ class CriarPersonagemRequest(BaseModel):
     # Narrador em todo turno, então o personagem não "some" depois da
     # criação.
     ficha_completa: str = Field(default="", max_length=20000)
+
+
+class CriarPersonagemRequest(PersonagemRequest):
+    # Quando informado, o perfil salvo substitui os campos de identidade
+    # acima. Os campos permanecem no contrato para manter clientes antigos.
+    personagem_id: Optional[str] = Field(default=None, max_length=80)
+    nome: str = Field(default="", max_length=80)
+    idade: int = Field(default=20, ge=1, le=200)
+    genero: str = Field(default="", max_length=40)
+    aparencia: str = Field(default="", max_length=500)
     cenario: str = Field(default="", max_length=12000)
     personalidade_mestre: str = Field(default="", max_length=8000)
     primeira_mensagem: str = Field(default="", max_length=4000)

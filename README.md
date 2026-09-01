@@ -1,9 +1,9 @@
-# Mestre 0.6.0 - motor de RPG com IA
+# Mestre 0.7.0 - motor de RPG com IA
 
 ## Versão atual
 
-**0.6.0** — Adiciona uma home de campanhas, páginas próprias da Wiki e de cada
-ficha, com URLs que podem ser abertas em outra aba.
+**0.7.0** — Adiciona personagens reutilizáveis, separados das campanhas, e
+remove a ficha padrão criada automaticamente em toda nova campanha.
 
 O projeto usa versionamento semântico: `MAIOR.MENOR.CORREÇÃO`. Recursos novos
 compatíveis elevam a versão menor; correções elevam a versão de correção;
@@ -30,7 +30,10 @@ login, banco, pagamento nem Modo Janitor.
 
 O que já funciona de ponta a ponta:
 
-- criar, retomar e apagar campanhas (`data/{id}.json`)
+- criar, retomar e apagar campanhas (`data/{id}.json`), escolhendo um
+  personagem reutilizável
+- criar, editar e apagar personagens separados das campanhas
+  (`data/personagens/{id}.json`)
 - home em galeria de campanhas, com links reais para jogar ou abrir o mundo
   de cada campanha em outra aba
 - turno: Intérprete → dados (se preciso) → Gerente (patch de estado) → Narrador
@@ -55,15 +58,20 @@ O que já funciona de ponta a ponta:
 
 ## Fichas, Wiki e presença
 
-A home em `/` lista as campanhas em cartões. `/jogo` mantém a interface da
-partida e aceita `?campanha_id={id}` para abrir uma campanha específica. A Wiki
+A home em `/` lista as campanhas em cartões e também leva a
+`/personagens`, onde os personagens do jogador podem ser criados, editados,
+apagados e reutilizados. `/jogo?nova=1` sempre abre o formulário limpo de uma
+nova campanha; `/jogo?campanha_id={id}` abre uma campanha específica. Cada
+campanha recebe uma cópia inicial do personagem selecionado, portanto sua
+evolução, PV e inventário não alteram o perfil nem outras campanhas. A Wiki
 de uma campanha fica em `/campanhas/{id}/wiki`: ela separa as nove categorias
 de ficha e permite criar fichas. Cada cartão leva, por um link real, à página
 da ficha em `/campanhas/{id}/wiki/{ficha_id}`, onde é possível consultar e
 editar seu conteúdo. Links para relações levam às fichas relacionadas.
 
 As fichas manuais do mundo continuam sendo a fonte de verdade separada do
-estado dinâmico da partida. A API expõe o catálogo completo em
+estado dinâmico da partida e começam vazias em uma nova campanha. A API expõe
+o catálogo completo em
 `GET /campanhas/{id}/catalogo` e uma ficha em
 `GET /campanhas/{id}/catalogo/{ficha_id}`; criação, edição e remoção continuam
 em `POST`, `PUT` e `DELETE` no mesmo recurso.
@@ -79,11 +87,12 @@ evitando o reenvio desnecessário de fichas.
 
 ## Ficha do jogador e configuração do mundo
 
-Cole uma ficha completa no campo próprio ao criar o personagem. O texto fonte
-é mantido intacto em `ficha_completa`; títulos Markdown como `## REGRAS` ou
-`## HABILIDADES` também são separados automaticamente em `ficha_estruturada`
-para dar contexto legível ao Narrador. Esse processo é local e determinístico:
-não consome tokens nem altera o que foi escrito.
+No catálogo **Meus personagens**, cada personagem pode ter uma ficha completa.
+O texto fonte é mantido intacto em `ficha_completa`; títulos Markdown como
+`## REGRAS` ou `## HABILIDADES` também são separados automaticamente em
+`ficha_estruturada` quando a campanha começa, para dar contexto legível ao
+Narrador. Esse processo é local e determinístico: não consome tokens nem
+altera o que foi escrito.
 
 Na seção **Configurar mundo**, o criador pode definir os quatro blocos comuns
 a plataformas de RP: cenário, personalidade do Mestre, primeira mensagem e
@@ -124,7 +133,7 @@ persistentes; uma relação removida nunca apaga a ficha de destino.
 app/
   config.py              .env, modelo Gemini, limites de memória
   main.py                FastAPI, páginas estáticas e /saude
-  models/                estado, ficha da Wiki, payloads e resultado de teste
+  models/                estado, personagem, ficha da Wiki, payloads e resultado de teste
   prompts/               system prompt + preencher() seguro
   services/
     ia_client.py         única camada Gemini
@@ -138,11 +147,12 @@ app/
     formatadores.py      texto injetado nos prompts
     fichas_jogador.py    organização local de fichas Markdown
     wiki_gerente.py      aplicação defensiva de patch da Wiki
-  storage/               campanha e fichas da Wiki em JSON atômico
-  routers/               campanhas e Wiki HTTP
+  storage/               campanhas, personagens e fichas da Wiki em JSON atômico
+  routers/               campanhas, personagens e Wiki HTTP
   static/
     home.html            galeria de campanhas (/)
     index.html           tela do jogo (/jogo)
+    personagens.html     catálogo de personagens reutilizáveis
     wiki.html            painel da Wiki por campanha
     ficha.html           detalhe e edição de uma ficha da Wiki
 data/                    um .json por campanha (gitignorado)

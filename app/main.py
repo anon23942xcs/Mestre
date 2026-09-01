@@ -12,13 +12,14 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.routers import campanha, wiki
+from app.routers import campanha, personagem, wiki
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
-app = FastAPI(title="Mestre", version="0.6.0")
+app = FastAPI(title="Mestre", version="0.7.0")
 
 app.include_router(campanha.router)
+app.include_router(personagem.router)
 app.include_router(wiki.router)
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -33,6 +34,11 @@ async def raiz():
 @app.get("/jogo")
 async def jogo():
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/personagens")
+async def pagina_personagens():
+    return FileResponse(STATIC_DIR / "personagens.html")
 
 
 @app.get("/campanhas/{campanha_id}/wiki")
